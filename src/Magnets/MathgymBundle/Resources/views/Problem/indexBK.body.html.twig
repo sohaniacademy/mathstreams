@@ -1,0 +1,182 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+{% block body %}
+    <div class="row">
+        <div class="col-sm-2">
+            {# <div class="panel panel-default">
+                <div class="panel-heading"><h2>Navigation</h2></div>
+                <div class="panel-body"> #}
+            <table class="table table-hover">
+                <thead>
+                <tr class="row filter-link btn-primary" data-target="home" data-noShowFilter="true">
+                    <th class="bold">Problems home</th>
+                </tr>
+                </thead>
+                <tbody>
+                {#                   <tr class="row filter-link" targetIdx="inprogress"><td>In progress</td></tr>
+                                     <tr class="row filter-link"><td>New</td></tr>
+                                    <tr class="row filter-link"><td>Submitted</td></tr> #}
+                </tbody>
+            </table>
+            <table class="table table-hover">
+                <thead>
+                <tr class="row">
+                    <th class="bold">My saved filters</th>
+                </tr>
+                </thead>
+                <tbody class="filterList">
+                {% for filter in app.user.pfilters|split(';') %}
+                    {% if filter != '' %}
+                        {% set filtName = '' %}
+                        {% set filtNameAntiWrap = '' %}
+                        {% for sid in filter|split('&') %}
+                            {% if sid != '' %}
+                                {% set filtName = filtName ~ streams[sid].name ~ "; " %}
+                                {% set filtNameAntiWrap = filtNameAntiWrap ~ "<span class='badge'>" ~ streams[sid].name ~ "</span>" %}
+                            {% endif %}
+                        {% endfor %}
+                        <tr class="row filter-link" data-target="{{ filter }}" data-title="{{ filtName }}">
+                            <td>{{ filtNameAntiWrap|raw }}</td>
+                            {#<td><span class="badge">{{ MX.stats_str([11,2,3]) }}</span></td>#}
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+            <table class="table table-hover">
+                <thead>
+                <tr class="row">
+                    <th class="bold">General filters</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="row filter-link" data-target="inprogress" data-title="In progress">
+                    <td>In progress</td>
+                </tr>
+                <tr class="row filter-link" data-target="inprogress" data-title="In progress">
+                    <td>Completed problems</td>
+                </tr>
+                <tr class="row filter-link" data-target="mydesign" data-title="My problems">
+                    <td>My content</td>
+                </tr>
+                <tr class="row filter-link" data-target="all" data-title="Browse all" data-noShowFilter="true">
+                    <td>Browse all..</td>
+                </tr>
+
+                <tr class="row">
+                    <td><a href="{{ path('newproblem') }}">Create a new problem..</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-sm-10">
+            {#            <div class="panel panel-default">
+                            <div class="panel-heading"> #}
+            <hr/>
+            <h2 id="content-panel-heading">Home</h2>
+            {#
+            <span id="stream-buts-panel">
+                <button class="btn btn-xs btn-default" id="filter-edit-toggle">Edit</button>
+                <button class="btn btn-xs btn-default" id="filter-edit-toggle">Save</button>
+            </span>
+            #}
+            <div id="filter-cats">
+                <ul>
+                    {% for stream in streams %}
+                        <button class="btn btn-xs btn-default stream-but"
+                                data-target="{{ stream.id }}">{{ stream.name }}</button>
+                    {% endfor %}
+                </ul>
+            </div>
+            <hr/>
+            <script>
+                $(function () {
+                    $("#filter-edit-toggle").on('click', function () {
+                        $("#filter-cats").slideToggle();
+                    });
+                    $("#filter-cats").hide();
+                });
+            </script>
+            {#                </div>
+                            <div class="panel-body" id="content-panel"> #}
+            <div id="content-panel">
+                {{ include('MagnetsMathgymBundle:Problem:home.frag.html.twig') }}
+            </div>
+            {#                </div>
+                        </div>
+            #}
+        </div>
+    </div>
+    <script>
+        $(function () {
+            $('#stream-buts-panel').hide();
+
+            $('.filter-link').on('click', function () {
+                setClass($('.filter-link'), 'default');
+                setClass($(this), 'primary');
+                if ($(this).data('target') == 'home') {
+                    XE.loadSection(Routing.generate("problemshome", {}), {
+                        targetOb: $("#content-panel"),
+                        changeURL: false,
+                    });
+                } else {
+                    //$('#stream-buts-panel').show();
+                    //loadProblems($(this).data('target'), $(this).find('td,th').html());
+                    XE.loadSection(Routing.generate("filterproblems", {}), {
+                        dataOb: {"fid": $(this).data('target')},
+                        targetOb: $("#content-panel"),
+                        changeURL: false
+                    });
+                }
+                if (typeof $(this).data('noShowFilter') !== 'undefined') {
+                    $("#content-panel-heading").html($(this).data('title'));
+                } else {
+                    $("#content-panel-heading").html("<small>Filter:</small> " + $(this).data('title'));
+                }
+            });
+
+//        function loadProblems(fid, fidLabel) {
+//            $("#content-panel-heading").html("<small>Filter:</small> " + fidLabel);
+//            $("#content-panel").html('Loading..');
+//            $.post(Routing.generate('filterproblems'), {fid: fid}, function (data, status) {
+//                $("#content-panel").html(data);
+//            });
+//        }
+//
+//
+//        $('.stream-but').on('click', function () {
+//            setClass($('.stream-but'), 'default');
+//            setClass($(this), 'primary');
+//
+//            loadProblems($(this).data('target'), $(this).html());
+//        });
+        });
+    </script>
+    <style>
+        .filter-link {
+            cursor: pointer;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}

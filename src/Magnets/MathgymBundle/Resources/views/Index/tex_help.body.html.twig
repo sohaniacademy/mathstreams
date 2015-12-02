@@ -1,0 +1,86 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+{% block body %}
+    <h2>LaTeX + HTML formatting guide</h2>
+    <b>$\LaTeX$</b>: Any maths formulae have to be enclosed inside a pair of dollar($) signs.<br/>
+    <b>HTML</b>: You can use simple formatting tags such as <span class="mono-font" style="font-weight:bold;">b,i,u,p,hr,br,ul,ol,li</span>.
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3>Examples</h3>
+        </div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Type</th>
+                <th>Sample input</th>
+                <th>Result</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Sub/superscripts</td>
+                <td class="tex-source">$x_y, x^y$</td>
+                <td class='tex-render'>$x_y,x^y$</td>
+            </tr>
+            <tr>
+                <td>Fractions</td>
+                <td class="tex-source">$\frac{p}{q}$</td>
+                <td class='tex-render'>$\frac{p}{q}$</td>
+            </tr>
+            <tr>
+                <td>Geometry symbols</td>
+                <td class="tex-source">$\angle,\Delta,\square$</td>
+                <td class='tex-render'>$\angle,\Delta,\square$</td>
+            </tr>
+            <tr>
+                <td>Misc Symbols</td>
+                <td class="tex-source">$\alpha,\beta$</td>
+                <td class='tex-render'>$\alpha,\beta$</td>
+            </tr>
+            <tr>
+                <td>HTML: Basic formatting</td>
+                <td class="tex-source">
+                    &lt;b&gt;Bold&lt;/b&gt;<br/>&lt;i&gt;Italic&lt;/i&gt;<br/>&lt;u&gt;Underline&lt;/u&gt;</td>
+                <td class='tex-render'><b>Bold</b><br/><i>Italic</i><br/><u>Underline</u></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    Try using these, as well as other examples given in the area below:
+    </table>
+    <div id="trialArea" class="well">
+        {{ include('MagnetsMathgymBundle:UI:texInput.frag.html.twig') }}
+    </div>
+    <script>
+        $(function () {
+            setTexCode("This is a <i>sample equation</i>:\n$x^2+y^2=z^2$\nIn $\\Delta ABC$, if $A_1,B_1,C_1$ are the <b>midpoints</b> of the sides $BC,CA,AB$ respectively, then the medians $AA_1,BB_1,CC_1$ are <u>concurrent</u>!\n" +
+                    "$4 \\leq 5$\n" +
+                    "$3\\times 4 = 12;12\\div 4 = 3$\n" +
+                    "$1,2,3,\\cdots,n$\n" +
+                    "$\\sqrt{2},\\sqrt[3]{2}$\n" +
+                    "Set operators: $\\supset,\\subset,\\cup$\n" +
+                    "Misc symbols: $\\pi, \\infty$\n" +
+                    "$\\angle ABC=45^{\\circ}$\n" +
+                    "$\\Delta ABC\\cong \\Delta PQR$"
+            );
+        });
+    </script>
+{%  endblock %}

@@ -1,0 +1,61 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel-default">
+            <div class="panel-heading"><h2>Select criteria</h2></div>
+            <ul class="list-group">
+                <li class="list-group-item">Standard:</li>
+                <li class="list-group-item">Topic:</li>
+                <li class="list-group-item">Difficulty:</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        {% set stats = [ "<span class='not-started'>Not started</span>","<span class='in-progress'>In progress</span>","<span class='submitted'>Submitted</span>"] %}
+        <div class="panel panel-default">
+            <div class="panel-heading"><h2>Problems</h2></div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr class="row">
+                        <th class="text-center">Problem no.</th>
+                        <th>Label</th>
+                        <th class="text-center">Type</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Score</th>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <th class="text-center">Actions</th>
+                        {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    //upon changing criteria, reload the list of problems..
+    //Give a summary, not necessarily a list?
+</script>

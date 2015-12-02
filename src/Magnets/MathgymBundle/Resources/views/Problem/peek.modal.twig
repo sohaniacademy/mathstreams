@@ -1,0 +1,47 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::blank.html.twig' %}
+
+{% block body %}
+    <h2>{{ title }}</h2>
+    {{ content|truncate(50,true) }}<br />
+    {#{% set idx=0 %}#}
+    {#{% for ct in content[0:min(2,content|length)] %}#}
+    {#<div>#}
+    {#<b>{{ ct.type }}</b>:: {{ ct.val|truncate(200,true) }}#}
+    {#</div>#}
+    {#{% endfor %}#}
+    {% if canView and hasTokens %}
+        <div class="btn btn-primary solve-btn">Start solving..</div>
+        <script>
+            $(".solve-btn").on("click", function () {
+                openPopup("{{ path('solveproblem',{ pid: id }) }}");
+            });
+        </script>
+    {% elseif not hasTokens %}
+        <div class="btn btn-primary read-btn">Start solving..</div>
+    {% endif %}
+    {% if canEdit %}
+        <div class="btn btn-warning edit-btn">Edit</div>
+    {% endif %}
+
+    <div class="btn">
+    </div>
+{% endblock %}

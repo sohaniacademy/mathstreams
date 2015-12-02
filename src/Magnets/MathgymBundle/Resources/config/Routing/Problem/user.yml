@@ -1,0 +1,80 @@
+#  This file is part of Mathstreams.
+#
+#  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+#
+#  Mathstreams is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+problems:
+    path:     /
+    defaults: { _controller: MagnetsMathgymBundle:Problem:index }
+
+problemshome:
+    path:     /home
+    defaults: { _controller: MagnetsMathgymBundle:Problem:home }
+    options:
+        expose: true
+
+probelmdetails:
+    path:     /getdetails
+    defaults: { _controller: MagnetsMathgymBundle:Problem:getDetails }
+    options:
+        expose: true
+
+#getpmap:
+#    path:     /getmap
+#    defaults: { _controller: MagnetsMathgymBundle:Problem:getmap }
+#    options:
+#        expose: true
+
+filterproblems:
+    path:     /filter
+    defaults: { _controller: MagnetsMathgymBundle:Problem:filter }
+    options:
+        expose: true
+
+peekproblem:
+    path:     /peek/{pid}
+    defaults: { _controller: MagnetsMathgymBundle:Problem:peek }
+    options:
+        expose: true
+
+#viewproblem:
+#    path:     /view/{pid}
+#    defaults: { _controller: MagnetsMathgymBundle:Problem:view }
+#    options:
+#        expose: true
+
+solveproblem:
+    path:     /solve/{pid}
+    defaults: { _controller: MagnetsMathgymBundle:Problem:solve }
+    options:
+        expose: true
+
+checkanswer:
+    path:     /check/{pid}
+    defaults: { _controller: MagnetsMathgymBundle:Solution:check }
+    options:
+        expose: true
+
+viewhint:
+    path:    /hint/{pid}/{hlevel}
+    defaults: { _controller: MagnetsMathgymBundle:Solution:hint }
+    options:
+        expose: true
+
+addproblemrating:
+    path:    /rate/{pid}
+    defaults: { _controller: MagnetsMathgymBundle:Problem:rate }
+    options:
+        expose: true

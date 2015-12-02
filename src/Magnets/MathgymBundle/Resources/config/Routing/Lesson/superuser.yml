@@ -1,0 +1,13 @@
+renamelesson:
+    path:     /lesson/rename/{lid}
+    defaults: { _controller: MagnetsMathgymBundle:Lesson:rename }
+    options:
+        expose: true
+        require_csrf: true
+
+dellesson:
+    path:     /lesson/delete/{lid}
+    defaults: { _controller: MagnetsMathgymBundle:Lesson:delete }
+    options:
+        expose: true
+        require_csrf: true

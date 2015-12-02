@@ -1,0 +1,128 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::plug.html.twig' %}
+
+{% block plug_body %}
+    <div id="edit-wrap" ngRoot="ngEditApp_{{ seed[0] }}" ng-controller="ngCtrl" ng-cloak>
+        <div class="row">
+            <div class="col-md-12">
+                <a href="{{ path('lessons') }}">&laquo; Back to home</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default" id='lesson'>
+                    <div class="panel-heading">
+                        <h3>
+                            <small>Name:</small>
+                            <input type="text" id="name"/>
+                            <span class="pull-right">
+                                {#<button id="preview-draft" class='btn-sm btn-default' ng-click="toggleFull()">Toggle#}
+                                    {#full view#}
+                                {#</button>#}
+                                <button id="save-draft" class='btn-sm btn-default'>Save</button>
+                            </span>
+                        </h3>
+                    </div>
+                    <div id="content-wrap" class="container-fluid panel-body tex-render"
+                         style="padding-top:0px; padding-bottom:0px;overflow: hidden">
+                        <div class="row">
+                            <nav class="col-md-3" style="padding:20px;">
+                                <ul class="menu nav" id="lessIndex">
+                                </ul>
+                            </nav>
+                            <div class="col-md-9" id="content-midwrap" style="overflow-y: scroll;max-height:250px;">
+                                <span id='content'></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{ include('MagnetsMathgymBundle:UI:texInput.frag.html.twig') }}
+    </div>
+    <script>
+        (function () {
+            var ngApp = angular.module('ngEditApp_{{ seed[0] }}', []);
+            ngApp.controller('ngCtrl', ['$scope', '$sce', function ($scope, $sce) {
+                $scope.fieldVals = {};
+                $scope.lessId = -1;
+
+                $scope.toggleFull = function () {
+                    if ($("#content-midwrap").css('max-height') != '1000px') {
+                        $("#content-midwrap").css('max-height', '1000px');
+                    } else {
+                        $("#content-midwrap").css('max-height', '250px');
+                    }
+                };
+
+                $scope.createHandler = function () {
+                    //setup init values..
+                    $scope.fieldVals["name"] = '{{ lesson.name|e('js') }}';
+                    $scope.fieldVals["content"] = '{{ lesson.content|e('js') }}';
+                    $("#name").val($scope.fieldVals["name"]);
+                    $("#content").html(transViewAdv($scope.fieldVals["content"]));
+                    $("#lessIndex").html(buildIndex($("#content")));
+                    $("#content-midwrap").scrollspy();
+
+                    setTexCode(decodeHTML($scope.fieldVals['content']));
+
+                    MathJax.Hub.Queue(["Typeset", MathJax.Hub, "#lesson"]);
+//q type samples..
+                    $scope.lessId = {{ lesson.id|default('-1') }};
+                    wireSaveMachine(getTexField(),
+                            $("#save-draft"),
+                            'savelesson', function () {
+                                return {lid: $scope.lessId};
+                            },
+                            function () {
+                                //parse any resources etc..
+                                $scope.fieldVals["name"] = $("#name").val();
+                                $scope.fieldVals["content"] = getTexCode();
+                                $("#content").html(transViewAdv($scope.fieldVals['content']));
+                                $("#lessIndex").html(buildIndex($("#content")));
+                                $("#content-midwrap").scrollspy();
+                                MathJax.Hub.Queue(["Typeset", MathJax.Hub, "#content"]);
+                            },
+                            function () {
+                                superLog($scope.fieldVals['content']);
+                                return $scope.fieldVals;
+                            },
+                            function (data) {
+                                $scope.lessId = data['lid'];
+                                superLog("Saved " + $scope.lessId);
+                            });
+                };
+                $scope.destroyHandler = function () {
+                };
+                $scope.createHandler();
+            }]);
+        }());
+    </script>
+    <style>
+        #lessIndex a {
+            padding:0px;
+        }
+        li.active a {
+            color: black !important;
+            font-weight: bold !important;
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,184 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <a href="{{ path('user') }}">&laquo;Back to home page</a><br/>
+
+            <div class="panel panel-default">
+                <div class="panel-heading"><h2>All Streams</h2></div>
+                <table class="table table-hover">
+                    <thead>
+                    <tr class="row">
+                        <th>No.</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for stream in streams %}
+                        <tr class="row stream-row" targetIdx='{{ stream.id }}'>
+                            <td>{{ loop.index }}</td>
+                            <td><a href="{{ path('viewstream', {'sid': stream.id }) }}">{{ stream.name }}</a></td>
+                            <td>
+                                {{ stream.stype }}
+                            </td>
+                            <td>
+                                <button class="edit-stream-button btn btn-xs btn-info" targetIdx='{{ stream.id }}'>
+                                    Edit
+                                </button>
+                                <button class="del-stream-button btn btn-xs btn-danger" targetIdx='{{ stream.id }}'>
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <button class="new-stream-button btn btn-success">New stream..</button>
+
+            <div id="edit-stream-dialog" title="Create/update stream">
+                <form>
+                    <fieldset>
+                        <label>Stream Name</label><input type="text" id="edited-stream-name" value=""
+                                                         class="text ui-widget-content ui-corner-all"><br/>
+                        <label>Stream Description</label><input type="text" id="edited-stream-descr" value=""
+                                                                class="text ui-widget-content ui-corner-all"><br/>
+                        <label>Stream Type</label><input type="text" id="edited-stream-type" value=""
+                                                         class="text ui-widget-content ui-corner-all"><br/>
+                        <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+                    </fieldset>
+                </form>
+            </div>
+
+            <div id="del-stream-confirm" title="Delete stream?">
+                <p><span class="ui-icon ui-icon-alert pull-left" style="margin:0 7px 20px 0;"></span>Are you sure?</p>
+            </div>
+            <script>
+                var editStreamDialog;
+                var delStreamDialog;
+                $(function () {
+                    editStreamDialog = $("#edit-stream-dialog").dialog({
+                        autoOpen: false,
+                        height: 300,
+                        width: 350,
+                        modal: true,
+                        buttons: {
+                            "Create/update stream": function () {
+                                if ($(this).data('action') == 'create') {
+                                    addStream();
+                                } else if ($(this).data('action') == 'update') {
+//                                    renameStream($(this).data('targetIdx'));
+                                    updateStream($(this).data('targetIdx'));
+                                }
+                            },
+                            Cancel: function () {
+                                $(this).dialog("close");
+                            }
+                        },
+                        close: function () {
+                        }
+                    });
+                    $(".new-stream-button").on("click", function () {
+                        editStreamDialog.data('action', 'create');
+                        editStreamDialog.dialog("open");
+                    });
+                    $(".edit-stream-button").on("click", function (e) {
+                        e.stopPropagation();
+                        editStreamDialog.data('action', 'update');
+                        editStreamDialog.data('targetIdx', $(this).attr('targetIdx'));
+                        editStreamDialog.dialog("open");
+                    });
+                    $(".edit-stream-dialog").find("form").on("submit", function (e) {
+                        e.preventDefault();
+                        if (editStreamDialog.data('action') == 'create') {
+                            addStream();
+                        } else {
+                            updateStream(editStreamDialog.data('targetIdx'));
+                        }
+                    });
+
+                    function addStream() {
+                        var valid = true;
+                        if ($("#edited-stream-name").val().length == 0) {
+                            editStreamDialog.dialog("close");
+                            return false;
+                        }
+                        postFwd(Routing.generate('newstream'), {
+                            name: $("#edited-stream-name").val(),
+                            descr: $("#edited-stream-descr").val(),
+                            type: $("#edited-stream-type").val(),
+                        });
+                    }
+
+                    function updateStream(sid) {
+                        var valid = true;
+                        if ($("#edited-stream-name").val().length == 0) {
+                            editStreamDialog.dialog("close");
+                            return false;
+                        }
+                        postFwd(Routing.generate('updatestream', {sid: sid}), {
+                            name: $("#edited-stream-name").val(),
+                            descr: $("#edited-stream-descr").val(),
+                            type: $("#edited-stream-type").val(),
+                        });
+                    }
+
+                    delStreamDialog = $("#del-stream-confirm").dialog({
+                        autoOpen: false,
+                        modal: true,
+                        buttons: {
+                            "Delete stream": function () {
+                                delStream($(this).data('targetIdx'), $(this).data('targetName'));
+                                $(this).dialog("close");
+                            },
+                            Cancel: function () {
+                                $(this).dialog("close");
+                            }
+                        }
+                    });
+                });
+                $(".del-stream-button").on("click", function (e) {
+                    e.stopPropagation();
+                    delStreamDialog.data('targetIdx', $(this).attr('targetIdx'))
+                            .dialog("open");
+                });
+                function delStream(targetIdx, targetName) {
+                    document.location.href = Routing.generate('delstream', {sid: targetIdx});
+                }
+            </script>
+        </div>
+    </div>
+
+    <style>
+        .stream-row {
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        $(".stream-row").on("click", function () {
+            document.location.href = Routing.generate('viewstream', {sid: $(this).attr('targetIdx')});
+        });
+    </script>
+{% endblock %}

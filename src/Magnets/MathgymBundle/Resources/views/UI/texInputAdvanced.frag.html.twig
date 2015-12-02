@@ -1,0 +1,578 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::frag.html.twig' %}
+{% block body %}
+
+    <div class="row">
+        <div class="col-md-2">
+        <span id="lesIndex" style="position:absolute;top:30px;">
+        </span>
+        </div>
+        <div class="col-md-10">
+            <div id="lessonMainWrapper" class="container-fluid" style="overflow-y: scroll;height:80vh">
+                <span id="currentViewBackBuf" style="display: none"></span>
+                <div id="main-blocks-wrap" class="tex-render">
+                    Loading.....
+                </div>
+                {% if editMode == true and unextendable is not defined %}
+                    <span class="dropup">
+                {# todo: the popup goes behind title input area, when no blocks present #}
+                        <button id="editINS" type="button" data-toggle="dropdown"
+                                data-placement="right"
+                                title="Add new block above"
+                                class="btn btn-block btn-primary glyphicon glyphicon-plus dropdown-toggle"></button>
+                <ul class="dropdown-menu" id="blkTypesMenu">
+                    <li><a href="#" class="insOpt" data-insType="h1" data-insLoc="end">h1</a></li>
+                    <li><a href="#" class="insOpt" data-insType="h2" data-insLoc="end">h2</a></li>
+                    <li><a href="#" class="insOpt" data-insType="h3" data-insLoc="end">h3</a></li>
+                    <li><a href="#" class="insOpt" data-insType="h4" data-insLoc="end">h4</a></li>
+                    <li><a href="#" class="insOpt" data-insType="p" data-insLoc="end">p</a></li>
+                    {#<li><a href="#" class="insOpt" data-insType="ph" data-insLoc="end">p_hidden</a></li>#}
+                    <li><a href="#" class="insOpt" data-insType="ggb" data-insLoc="end">ggb</a></li>
+                </ul>
+                </span>
+                {% endif %}
+                <div class="full-width" style="height:30vh"></div>
+            </div>
+        </div>
+    </div>
+    {% if editMode == true %}
+        <template id="editToolbarTemplate">
+        <span id="toolBox" class="btn-toolbar pull-right"
+              style="padding-right: 10px;position:absolute;right:0px;top:0px;">
+            <span class="dropdown">
+                <button id="editINS" type="button" title="Add new block above" data-toggle="dropdown"
+                        data-placement="top"
+                        class="btn btn-xs btn-primary glyphicon glyphicon-plus dropdown-toggle"></button>
+                <ul class="dropdown-menu" id="blkTypesMenu">
+                    <li><a href="#" class="insOpt" data-insType="h1" data-insLoc="cur">h1</a></li>
+                    <li><a href="#" class="insOpt" data-insType="h2" data-insLoc="cur">h2</a></li>
+                    <li><a href="#" class="insOpt" data-insType="h3" data-insLoc="cur">h3</a></li>
+                    <li><a href="#" class="insOpt" data-insType="h4" data-insLoc="cur">h4</a></li>
+                    <li><a href="#" class="insOpt" data-insType="p" data-insLoc="cur">p</a></li>
+                    {#<li><a href="#" class="insOpt" data-insType="ph" data-insLoc="end">p_hidden</a></li>#}
+                    <li><a href="#" class="insOpt" data-insType="ggb" data-insLoc="end">ggb</a></li>
+                </ul>
+                </span>
+            <button id="editUP" type="button" title="Move block up"
+                    class="btn btn-xs btn-default glyphicon glyphicon-arrow-up"></button>
+                        <button id="editDOWN" type="button"
+                                title="Move block down"
+                                class="btn btn-xs btn-default glyphicon glyphicon-arrow-down"></button>
+                        <button id="editDEL" type="button" title="Remove block"
+                                class="btn btn-xs btn-danger glyphicon glyphicon-minus"></button>
+        </span>
+        </template>
+        <template id="editBoxTemplate">
+        <span id="editBox">
+            <div style="position:absolute;width:90%;left: 5%;margin: 5px;padding: 5px;
+            background-color: rgba(0,0,0,.5);border-radius: 3px; box-shadow: 0px 0px 10px black;z-index: 100;">
+                <textarea id='editField' class='form-control full-width mono-font' placeholder='Type here'
+                ></textarea>
+                <span id="texStatusText" class="mono-font"
+                      style="background-color: #eee; width:auto;margin-top:2px;padding-left:10px;padding-right: 10px; margin-left:5px;font-size:.8em;"></span>
+                    <span class="btn-toolbar pull-right">
+                        <button id='editOK' type="button" title="Save block"
+                                class="btn btn-xs btn-success glyphicon glyphicon-ok"></button>
+
+                        <button id='editHELP' type="button" title="Help"
+                                class="btn btn-xs btn-info glyphicon glyphicon-question-sign"></button>
+                    </span>
+            </div>
+        </span>
+        </template>
+    {% endif %}
+    <script>
+        //this is all the Latex input and render stuff
+        var renderQueue = [];
+        var isCurrentlyRendering = false;
+        var pendingErrorMsgs = false;
+
+        function pushToRenderQueue(blkId, blkCode) {
+
+            for (var idx = 0; idx < renderQueue.length; idx++) {
+                if (renderQueue[idx]['blkId'] == blkId) { //Id already exists in render queue..
+                    //so just update that render job..
+                    renderQueue[idx]['blkCode'] = blkCode;
+                    return;
+                }
+            }
+            renderQueue.push({"blkId": blkId, "blkCode": blkCode}); //if not found, push to end..
+            startRenderQueue(); //check render status..
+        }
+
+        function startRenderQueue() {
+            if (isCurrentlyRendering) {
+                return;
+            } else {
+                renderQueueLoop();
+            }
+        }
+
+        function renderQueueLoop() {
+            if ((curTask = renderQueue.shift()) == undefined) {
+                isCurrentlyRendering = false;
+                return;
+            } else {
+                isCurrentlyRendering = true;
+                $("#currentViewBackBuf").html(curTask["blkCode"]);
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, 'currentViewBackBuf']);
+                MathJax.Hub.Queue([postRender, curTask["blkId"]]);
+            }
+        }
+
+        function postRender(blkId) {
+            //swap buffers..
+            updateBlkTex(blkId, $("#currentViewBackBuf").html());
+            if (curBlkId == blkId) { //todo.. this is where postRender still needs to hook into Block apparatus..
+                //can/should design a callback mechanism as a more permanent solution
+                if (!pendingErrorMsgs) {
+                    $("#texStatusText").html("<span style='color:green; font-weight:bold;'>Rendering complete</span>");
+                    $("#texStatusIcon").removeClass('glyphicon-remove glyphicon-refresh btn-danger btn-info').addClass('glyphicon-ok btn-success');
+                    //	MathJax.HTML.addText($("#texLog")[0],"RenderDone!");
+                } else {
+                    pendingErrorMsgs = false;
+                }
+            } else {
+                //just drop any pending error messages..
+                pendingErrorMsgs = false;
+            }
+            renderQueueLoop();
+        }
+
+        var originalFilterText = MathJax.Message.filterText;
+        MathJax.Message.filterText = function (txt, n) {
+            txt = originalFilterText(txt, n);
+            if (!pendingErrorMsgs) {
+                $("#texStatusText").html("<span style='color:blue;font-style:italic;'>" + txt + "</span>");
+                $("#texStatusIcon").removeClass('glyphicon-remove glyphicon-ok btn-danger btn-success').addClass('glyphicon-refresh btn-info');
+            }
+            return txt;
+        };
+        MathJax.Hub.signal.Interest(function (message) {
+            var msgStr = message + "";
+            if (msgStr.search("TeX Jax") >= 0) {
+                pendingErrorMsgs = true;
+                $("#texStatusText").html("<span style='color:red;'><span style='font-weight:bold'>Error: </span>" + msgStr + "</span>");
+                $("#texStatusIcon").removeClass('glyphicon-ok glyphicon-refresh btn-success btn-info').addClass('glyphicon-remove btn-danger');
+            }
+            //MathJax.HTML.addText($("#texLog")[0], msgStr);
+            //MathJax.HTML.addElement($("#texLog")[0], "br");
+        });
+        function reflowScrollHt() {
+            editField().height(0);
+            editField().height(editField()[0].scrollHeight);
+            editField().height(editField()[0].scrollHeight);
+        }
+
+    </script>
+    <script>
+        //this is all the block-related stuff
+        var curBufIdx;
+        var blockTypes = ["h1", "h2", "h3", "h4", "p", "ph", "ggb", "q"];
+        var blockTypesText = ["h1", "h2", "h3", "h4", "p", "ph"];
+
+        function isTextType(givenType) {
+            return (blockTypesText.indexOf(givenType) >= 0);
+        }
+
+        var editBoxTemplate = null;
+        var blockToolbarTemplate = null;
+        $(function () {
+            editBoxTemplate = $("#editBoxTemplate").html();
+            //$("#editBoxTemplate").remove(); // so that id conflicts don't occur
+            blockToolbarTemplate = $("#editToolbarTemplate").html();
+            $("#lessonMainWrapper").animate({scrollTop: 0}, 200);
+        });
+
+        function editBox() {
+            return $("#editBox");
+        }
+
+        function toolBox() {
+            return $("#toolBox");
+        }
+
+        function editField() {
+            return $("#editField");
+        }
+
+        var mainBlocks = [];
+        var contentsIndex = [];
+
+        var curBlkId = -1;
+        var curBlkMode = 0;//0->none,1->sel,2->edit
+
+        var onFocusRenderTimeout = null;
+
+        function buildIndex() {
+            //algorithm: needs to generate an index entry for each h1 etc element..
+            indexStr = "<ul>";
+            for (idx = 0; idx < mainBlocks.length; idx++) {
+                //if
+                if ((mainBlocks[idx]["type"] == "h1" || mainBlocks[idx]["type"] == "h2" || mainBlocks[idx]["type"] == "h3" || mainBlocks[idx]["type"] == "h4") && isIndexable(idx)) {
+                    indexStr = indexStr + "<li>" + mainBlocks[idx]["val"] + "</li>";
+                }
+            }
+            indexStr = indexStr + "</ul>";
+            $("#lesIndex").html(indexStr);
+        }
+
+        function getIndexOf(blkId) {
+            return "1.1.";
+        }
+        function isIndexable(blkId) {
+            return !(mainBlocks[blkId]["opts"] && mainBlocks[blkId]["opts"]["noindex"] == 1);
+        }
+        function updateContent(blkId) {
+            //to be called, after insert/ edit done:
+            buildIndex();
+
+            blkContentVal = mainBlocks[blkId]["val"];
+            if (mainBlocks[blkId]["type"] == "h1" || mainBlocks[blkId]["type"] == "h2" || mainBlocks[blkId]["type"] == "h3" || mainBlocks[blkId]["type"] == "h4") {
+                blkContent = "<" + mainBlocks[blkId]["type"] + ">" +
+                        (isIndexable(blkId) ? ("<small>" + getIndexOf(blkId) + "</small>") : "") + "<span class='blockContent'>" + blkContentVal + "</span></" + mainBlocks[blkId]["type"] + ">";
+            } else if (mainBlocks[blkId]["type"] == "p" || mainBlocks[blkId]["type"] == "ph") {
+                blkContent = "<div class='blockContent '>" + blkContentVal + "</div>";
+            } else if (mainBlocks[blkId]["type"] == "ggb") {
+                blkContent = '<div class="blockContent"><iframe scrolling="no" width="800px" height="450px" style="border:0px;display:block;margin:0px auto;"></iframe></div>';
+                iFrameSrc = 'https://tube.geogebra.org/material/iframe/id/' + blkContentVal + '/width/800/height/450/border/888888/rc/false/ai/false/sdz/true/smb/false/stb/false/stbh/true/ld/false/sri/true/at/auto';
+            }
+            //set the block content..
+            getBlkById(blkId).find(".blockContentWrapper").html(blkContent);
+            if (mainBlocks[blkId]["type"] == "ggb") {
+                setTimeout(function () {
+                    getBlkById(blkId).find("iframe").attr('src', iFrameSrc);
+                }, 1000);
+            }
+
+            if (isTextType(mainBlocks[blkId]["type"])) {
+                pushToRenderQueue(blkId, transViewAdv(getBlkById(blkId).find(".blockContent").html()));
+            }
+        }
+
+        function insertBlk(blkType, blkLoc, blkData, blkOpts) {
+            blkLoc = (typeof blkLoc === 'undefined') ? "end" : blkLoc;
+            if (blkLoc == "cur") {
+                blkInsPos = curBlkId;
+            } else {
+                blkInsPos = mainBlocks.length;
+            }
+            blkWrapper = "<div class='mainBlock' data-blkid='" + blkInsPos + "' style='position:relative'" +
+                    " title='Click to select; double-click to edit' ><div class='blockContentWrapper'></div><div class='toolbarHolder' /></div>";
+            if (blkType == "p" || blkType == "ph") {
+                blkContentVal = (typeof blkData === 'undefined') ? "This is a sample paragraph." : blkData;
+            } else if (blkType == "h1" || blkType == "h2" || blkType == "h3" || blkType == "h4") {
+                blkContentVal = (typeof blkData === 'undefined') ? "Sample heading" : blkData;
+            } else if (blkType == "ggb") {
+                blkContentVal = (typeof blkData === 'undefined') ? "2193411" : blkData;
+            }
+            newBlock = {"type": blkType, "val": blkContentVal, "opts": blkOpts};
+            if (blkLoc == "cur") {
+                //need to shift all blk ids..
+                clearMode();
+                //first, shift all blockIds..
+                for (i = mainBlocks.length - 1; i >= blkInsPos; i--) {
+                    getBlkById(i).attr("data-blkid", i + 1);
+                }
+                //next, insert into mainBlocks
+                mainBlocks.splice(blkInsPos, 0, newBlock);
+
+                //finally, insert the block.. before the next one..
+                getBlkById(blkInsPos + 1).before(blkWrapper);
+            } else {
+                clearMode();
+                mainBlocks.splice(blkInsPos, 0, newBlock);
+                $("#main-blocks-wrap").append(blkWrapper);
+            }
+            updateContent(blkInsPos);
+            reBindFields();
+        }
+
+        function deleteBlk() {
+            if (curBlkId == -1)
+                return;
+            else
+                blkId = curBlkId;
+            clearMode();
+            mainBlocks.splice(blkId, 1);
+            getBlkById(blkId).remove();
+            //shift all blkids..
+            for (i = blkId + 1; i <= mainBlocks.length; i++) {
+                getBlkById(i).attr("data-blkid", i - 1);
+            }
+            reBindFields();
+        }
+
+        function moveBlk(direction) {
+            if ((curBlkId == -1) || ((curBlkId == 0) && direction == "up") || ((curBlkId == mainBlocks.length - 1) && direction == "down"))
+                return;
+            else
+                blkId = curBlkId;
+            clearMode();
+            tmpBlk = mainBlocks[blkId];
+            if (direction == "up") {
+                mainBlocks[blkId] = mainBlocks[blkId - 1];
+                mainBlocks[blkId - 1] = tmpBlk;
+
+                getBlkById(blkId).detach().insertBefore(getBlkById(blkId - 1));
+                getBlkById(blkId).attr("data-blkid", "tmp");
+                getBlkById(blkId - 1).attr("data-blkid", blkId);
+                getBlkById("tmp").attr("data-blkid", blkId - 1);
+                buildIndex();
+            } else {
+                mainBlocks[blkId] = mainBlocks[blkId + 1];
+                mainBlocks[blkId + 1] = tmpBlk;
+
+                getBlkById(blkId).detach().insertAfter(getBlkById(blkId + 1));
+                getBlkById(blkId).attr("data-blkid", "tmp");
+                getBlkById(blkId + 1).attr("data-blkid", blkId);
+                getBlkById("tmp").attr("data-blkid", blkId + 1);
+                buildIndex();
+            }
+            reBindFields();
+        }
+
+        function getBlkById(givenId) {
+            return $("[data-blkid=" + givenId + "]");
+        }
+
+        function updateBlkTex(givenId, content) {
+            if (getBlkById(givenId).length > 0) {
+                if (isTextType(mainBlocks[givenId]["type"])) {//should do this only for text nodes..
+                    getBlkById(givenId).find(".blockContent").html(content);
+                }
+            }
+        }
+
+        function clearMode() {
+            if (curBlkMode == 0 && curBlkId == -1) {
+                return;
+            } else if (curBlkMode == 1) {
+                //drop out of current selection..
+                if (toolBox().length > 0) {
+                    toolBox().remove();
+                }
+                getBlkById(curBlkId).removeClass('curEditing curSelected');
+                curBlkId = -1;
+                curBlkMode = 0;
+            } else {
+                //drop out of current editing..
+                if (isTextType(mainBlocks[curBlkId]["type"])) {
+                    //extract text for text types:
+                    mainBlocks[curBlkId]["val"] = transViewAdv(editField().val());
+                } else if (mainBlocks[curBlkId]["type"] == "ggb") {
+                    //extract and save just the numerical value..
+                    mainBlocks[curBlkId]["val"] = editField().val().match(/[0-9]+/)[0];
+                }
+                editBox().remove();
+                getBlkById(curBlkId).removeClass('curEditing curSelected');
+                updateContent(curBlkId);
+                clearTimeout(onFocusRenderTimeout);
+                curBlkId = -1;
+                curBlkMode = 0;
+            }
+        }
+
+        function selectBlk(newId) {
+            if (curBlkId == newId && curBlkMode == 1)
+                return;
+            else if (mainBlocks[newId]['opts'] && (mainBlocks[newId]['opts']['immutable'] == 1))
+                return;
+            else
+                clearMode();
+            if (newId != -1) {
+                curBlkId = newId;
+                curBlkMode = 1;
+                if (!(mainBlocks[curBlkId]['opts'] && mainBlocks[curBlkId]['opts']['immovable'] == 1)) {
+                    getBlkById(curBlkId).find(".toolbarHolder").html(blockToolbarTemplate);
+                }
+                getBlkById(curBlkId).addClass('curSelected').focus();
+                reBindFields();
+            }
+        }
+
+        function editBlk(newId) {
+            if (curBlkId == newId && curBlkMode == 2)
+                return;
+            else if (mainBlocks[newId]['opts'] && (mainBlocks[newId]['opts']['immutable'] == 1))
+                return;
+            else
+                clearMode();
+            if (newId != -1) {
+                curBlkId = newId;
+                curBlkMode = 2;
+                getBlkById(curBlkId).addClass('curEditing').after(editBoxTemplate);
+                reBindFields();
+                reflowScrollHt();
+                reBindFields();
+                if (isTextType(mainBlocks[newId]["type"])) {
+                    editField().focus().val("").val(mainBlocks[curBlkId]["val"]).attr('placeholder', 'Enter content here');
+                    onFocusRenderTimeout = setTimeout(function () {
+                        pushToRenderQueue(curBlkId, transViewAdv(editField().val()));
+                    }, 200);
+                } else if (mainBlocks[newId]["type"] == "ggb") {
+                    editField().focus().val("").val(mainBlocks[curBlkId]["val"]).attr('placeholder', 'Enter the numerical ID of GeogebraTube file');
+                } else if (mainBlocks[newId]["type"] == "q") {
+                    editField().focus().val("").val(mainBlocks[curBlkId]["val"]).attr('placeholder', 'Enter the numerical ID of the problem');
+                }
+//                $('#lessonMainWrapper').animate({
+//                    scrollTop: getBlkById(curBlkId).position().top - 20
+//                }, 1000);
+            }
+        }
+
+        function reBindFields() {
+            {% if editMode == true %}
+            $(".mainBlock").unbind().on('click', function (e) {
+                e.preventDefault();
+                selectBlk(parseInt($(this).attr("data-blkId")));
+            }).on('dblclick', function (e) {
+                e.preventDefault();
+                editBlk(parseInt($(this).attr("data-blkId")));
+            }).on('keydown', function (e) {
+                if (e.which == 13) {
+                    e.preventDefault();
+                    editBlk(parseInt($(this).attr("data-blkId")));
+                }
+            });
+            $(".insOpt").unbind().on("mouseup", function () {
+                insertBlk($(this).attr("data-insType"), $(this).attr("data-insLoc"), {});
+            });
+            if (editField().length > 0) {
+                editField().unbind().on("keydown", function (e) {
+                    //check if down or up arrow, then navigate to prev/next block..
+                    if (e.which == 40) {
+                        //down key
+                        if (editField()[0].selectionStart == editField()[0].selectionEnd
+                                && editField()[0].selectionStart == editField().val().length) {
+                            //navigate to next block..
+                            if (curBlkId + 1 < mainBlocks.length) {
+                                editBlk(curBlkId + 1);
+                            }
+                        }
+                    } else if (e.which == 38) {
+                        //up key..
+                        if (editField()[0].selectionStart == editField()[0].selectionEnd
+                                && editField()[0].selectionStart == 0) {
+                            //navigate to previous block..
+                            if (curBlkId > 0) {
+                                editBlk(curBlkId - 1);
+                            }
+                        }
+                    } else if (e.which == 27) {
+                        //ESC key.. drop back to selection mode
+                        selectBlk(curBlkId);
+                    }
+                }).on("keyup", function (e) {
+                    if (e.which != 38 && e.which != 40) {
+                        reflowScrollHt();
+                        pushToRenderQueue(curBlkId, transViewAdv(editField().val()));
+                    }
+                });
+                $("#editOK").unbind().on("click", function () {
+                    editBlk(-1);
+                });
+            }
+            if (toolBox().length > 0) {
+
+                $("#editUP").unbind().on("click", function () {
+                    moveBlk("up");
+                });
+                $("#editDOWN").unbind().on("click", function () {
+                    moveBlk("down");
+                });
+                $("#editDEL").unbind().on("click", function () {
+                    deleteBlk();
+                });
+            }
+            //            rebindDropdowns();
+            rebindTooltips();
+            {% endif %}
+        }
+
+        function data2Ob() {
+            clearMode();
+            return mainBlocks;
+        }
+        function data2Src() {
+            clearMode();
+            return JSON.stringify(mainBlocks);
+        }
+
+        function loadAll(data) {
+            $("#main-blocks-wrap").html("");
+            codeBlkArr = data;//JSON.parse(data);
+            $.each(codeBlkArr, function (key) {
+                if (blockTypes.indexOf(codeBlkArr[key]["type"]) >= 0) {
+                    insertBlk(codeBlkArr[key]["type"], "end", codeBlkArr[key]["val"], codeBlkArr[key]["opts"]);
+                }
+            });
+            reBindFields();
+        }
+
+        function updateBlkById(givenId, content) {
+            $.each(mainBlocks, function (key, val) {
+                if(val['opts'] && val['opts']['id'] == givenId){
+                    //set content.. crudely, for now..
+                    mainBlocks[key]["val"] = transViewAdv(content);
+                    updateContent(key);
+                }
+            });
+        }
+
+        //need an alternative, flat view-side rendering function..
+
+    </script>
+    <style>
+        .mainBlock {
+            padding: 5px;
+        }
+
+        .mainBlock.curEditing, .mainBlock:focus {
+            border: 1px dotted black;
+            padding: 4px;
+        }
+
+        .mainBlock.curSelected {
+            background-color: #eeeeee;
+            cursor: text;
+            border: 1px solid black;
+            padding: 4px;
+        }
+
+        {% if editMode == true %}
+        .mainBlock:hover {
+            background-color: #eeeeee;
+            cursor: text;
+        }
+
+        {% endif %}
+
+        .editAdd {
+            font-size: 2.0em;
+            background-color: #eeeeee;
+        }
+
+        .dropdown-menu {
+            min-width: 50px !important;
+        }
+    </style>
+{% endblock %}

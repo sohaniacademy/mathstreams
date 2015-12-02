@@ -1,0 +1,79 @@
+#  This file is part of Mathstreams.
+#
+#  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+#
+#  Mathstreams is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Learn more about services, parameters and containers at
+# http://symfony.com/doc/current/book/service_container.html
+parameters:
+#    parameter_name: value
+
+services:
+    input_validator:
+        class: Magnets\MathgymBundle\Service\InputValidationService
+        arguments: [ '@exercise_html_purifier.default' ]
+        
+    db_h:
+        class: Magnets\MathgymBundle\Service\DBHelperService
+        arguments: [ '@doctrine.orm.entity_manager' ]
+        tags:            
+            - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
+
+    ajax_h:
+        class: Magnets\MathgymBundle\Service\AjaxHelperService
+        arguments: ['@templating', '@request_stack', '@session.flash_bag' ]
+        tags:
+            - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
+
+    filt_helper:
+        class: Magnets\MathgymBundle\Service\FilterHelperService
+        arguments: [ '@db_h', '@security.role_hierarchy' ]
+
+    stats_helper:
+        class: Magnets\MathgymBundle\Service\StatsHelperService
+        arguments: [ '@db_h', '@security.authorization_checker' ]
+    
+    user_signal:
+        class: Magnets\MathgymBundle\Service\UserSignalService
+        arguments: [ '@db_h' ]
+
+    rate_control:
+        class: Magnets\MathgymBundle\Service\RateControlService
+        arguments: [ '@security.token_storage', '@security.role_hierarchy', '@session.flash_bag', '%hard_limits%', '%rc_limits%' ]
+        tags:            
+            - { name: kernel.event_listener, event: kernel.controller, method: onKernelController }
+            - { name: kernel.event_listener, event: security.interactive_login, method: onUserLogin }
+
+
+    csrf_guard:
+        class: Magnets\MathgymBundle\Service\CSRFGuardService
+        arguments: [ '@router', '@security.csrf.token_manager' ]
+        tags:
+            - { name: kernel.event_listener, event: kernel.controller, method: onKernelController }
+
+
+
+    twig.extension.text:
+        class: Twig_Extensions_Extension_Text
+        tags:
+             - { name: twig.extension }
+
+    app.twig_extension:
+        class: Magnets\MathgymBundle\Twig\RStackExtension
+        public: false
+        calls:
+            - [setRStack, ['@request_stack']]
+        tags:
+             - { name: twig.extension }

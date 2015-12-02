@@ -1,0 +1,64 @@
+#  This file is part of Mathstreams.
+#
+#  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+#
+#  Mathstreams is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+lessons:
+    path:     /
+    defaults: { _controller: MagnetsMathgymBundle:Lesson:index }
+
+lessonshome:
+    path:     /home
+    defaults: { _controller: MagnetsMathgymBundle:Lesson:home }
+    options:
+        expose: true
+
+lessondetails:
+    path:     /getdetails
+    defaults: { _controller: MagnetsMathgymBundle:Lesson:getDetails }
+    options:
+        expose: true
+
+filterlessons:
+    path:     /filter
+    defaults: { _controller: MagnetsMathgymBundle:Lesson:filter }
+    options:
+        expose: true
+        require_csrf: true
+
+#getfilterlessons:
+#    path:     /filterall
+#    defaults: { _controller: MagnetsMathgymBundle:Lesson:filterall }
+#    options:
+#        expose: true
+#        require_csrf: true
+
+peeklesson:
+    path:     /peek/{lid}
+    defaults: { _controller: MagnetsMathgymBundle:Lesson:peek }
+    options:
+        expose: true
+
+viewlesson:
+    path:     /view/{lid}
+    defaults: { _controller: MagnetsMathgymBundle:Lesson:view }
+    options:
+        expose: true
+
+editlesson:
+    path:     /edit/{lid}
+    defaults: { _controller: MagnetsMathgymBundle:Lesson:edit }
+    options:
+        expose: true

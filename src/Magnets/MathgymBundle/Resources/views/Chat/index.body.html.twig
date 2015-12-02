@@ -1,0 +1,389 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-12">
+            <div id='rooms-bar' class="btn-toolbar" role="toolbar">
+                <span id="rooms-list"></span>
+
+                <div class="btn-group min-padding" role="group">
+                    {% if is_granted('ROLE_SU') %}
+                        <button class="btn btn-xs btn-success" id="new-room-button" data-toggle="tooltip"
+                                data-placement="bottom" title="Create room"><span
+                                    class="glyphicon glyphicon-plus"></span></button>
+                    {% endif %}
+                    <button class="btn btn-xs btn-primary" id="reload-room-button" data-toggle="tooltip"
+                            data-placement="bottom" title="Reload rooms"><span
+                                class="glyphicon glyphicon-repeat"></span></button>
+                    <span id="loading-area"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" style="height:55vh">
+        <div class="col-sm-10 full-height">
+            <div id='chat-wrap' class="well full-height">
+                <div id="chat-area" class="tex-render full-height" style="overflow-y:auto">Loading..</div>
+            </div>
+        </div>
+        <div class="col-sm-2 hidden-xs" style="height:55vh">
+            <div class="panel panel-default full-height">
+                <div class="panel-heading">
+                    <h4>Online users</h4>
+                </div>
+                <div id='usr-list' class="panel-body" style="height:50%">Loading..</div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="well" style="margin:2px;padding:0px;">
+                {% set toInject %}
+                    <button id="send-btn" type="button" class="btn btn-warning">Send</button>
+                {% endset %}
+                {{ include('MagnetsMathgymBundle:UI:texInput.frag.html.twig', { 'tex_height': '10vh', 'injected':toInject }) }}
+            </div>
+        </div>
+    </div>
+    <script>
+        var allRooms = [];
+        var joinedRooms = [];//just the rid values
+        var primaryRoom = '{{ gen_rid }}';
+        var activeRoom = primaryRoom;
+        var roomViews = [];
+        var roomUserLists = [];
+
+        function updateRoomsModelView(rlist) {
+            //superLog($(rlist).html());
+            setRoomsBar();
+            allRooms = [];
+            joinedRooms = [];
+
+            $.each(rlist.find(".rname"), function (key, value) {
+                allRooms[$(value).attr('rid')] = $(value).html();
+                //create button to be appended:
+
+                var joinClass = "";
+                var optsBtn = "";
+
+                if ($(value).attr('joined') == '1') {
+                    joinClass = 'room-joined';
+                    if ($(value).attr('rid') != primaryRoom) {
+                        optsBtn = '<button class="btn btn-xs btn-default btn-warning room-btn-opts" rid="' + $(value).attr('rid') + '" data-toggle="tooltip" data-placement="bottom" title="Leave room"><span class="glyphicon glyphicon-minus"></span></button>';
+                    }
+                    joinedRooms.push($(value).attr('rid'));
+                } else {
+                    joinClass = 'room-unjoined';
+                }
+                //add delete room button..
+                {% if is_granted('ROLE_SU') %}
+                if ($(value).attr('rid') != primaryRoom) {
+                    optsBtn += '<button class="btn btn-xs btn-default btn-danger room-btn-del" rid="' + $(value).attr('rid') + '" data-toggle="tooltip" data-placement="bottom" title="Delete room"><span class="glyphicon glyphicon-remove"></span></button>';
+                }
+                {% endif %}
+                var newBtn = '<div class="btn-group min-padding ' + joinClass + '" role="group"><button class="btn btn-xs room-btn" rid="' + $(value).attr('rid') + '" data-toggle="tooltip" data-placement="bottom" title="Enter room">' + $(value).html() + '</button>' + optsBtn + '</div>';
+                $("#rooms-list").append(newBtn);
+            });
+            $(".room-btn").on('click', function () {
+                switch2Room($(this).attr('rid'));
+            });
+            $(".room-btn-opts").on('click', function () {
+                leaveRoom($(this).attr('rid'));
+            });
+            {% if is_granted('ROLE_SU') %}
+            $(".room-btn-del").on('click', function () {
+                delRoom($(this).attr('rid'));
+            });
+            {% endif %}
+            if (joinedRooms.indexOf(activeRoom) < 0) {
+                switch2Room(primaryRoom);
+            } else {
+                switch2Room(activeRoom);
+            }
+            rebindTooltips();
+        }
+
+        function setRoomsBar() {
+            if ($("#room-bar-progress").length) {
+                $("#rooms-list").html("").css('opacity', '1.0');
+                $("#room-bar-progress").remove();
+            }
+        }
+
+        function resetRoomsBar() {
+            if (!$("#room-bar-progress").length)
+                $("#rooms-list").css('opacity', '0.5');
+            $("#loading-area").html("<button id='room-bar-progress' class='btn btn-xs' disabled>Loading..</button>");
+        }
+
+        function getRoomsList() {
+            resetRoomsBar();
+            XE.postAjax('chatroom_list', {successFn: updateRoomsModelView});
+        }
+
+        function joinRoom(rid) {
+            if (joinedRooms.indexOf(rid) >= 0) {
+                //already joined, nothing to do, just switch..
+                return;
+            }
+            resetRoomsBar();
+            XE.postAjax('chatroom_enter', {
+                rid: rid, successFn: function (rlist) {
+                    updateRoomsModelView(rlist);
+                    switch2Room(rid);
+                });
+        }
+
+        function leaveRoom(rid) {
+            if (joinedRooms.indexOf(rid) < 0 || rid == primaryRoom) {
+                //already not joined, nothing to do, just switch..
+                return;
+            }
+            resetRoomsBar();
+            XE.postAjax('chatroom_leave', {
+                routeParamsOb: {rid: rid}, successFn: function (rlist) {
+                    updateRoomsModelView(rlist);
+                    switch2Room(primaryRoom);
+                });
+        }
+
+        function switch2Room(rid) {
+            //check if not already joined the room..
+            if (joinedRooms.indexOf(rid) < 0) {
+                //first need to join the room..
+                joinRoom(rid);
+                return;
+            }
+            if (activeRoom != "") {
+                //disable current active..
+                $(".room-btn[rid='" + activeRoom + "']").removeClass('btn-info');
+                //if still in the current active room..
+
+                $(".room-btn[rid='" + activeRoom + "']").addClass('btn-default');
+            }
+            activeRoom = rid;
+            if (activeRoom != "") {
+                $(".room-btn[rid='" + activeRoom + "']").removeClass('btn-default');
+                $(".room-btn[rid='" + activeRoom + "']").addClass('btn-info');
+            }
+            if (!(activeRoom in roomViews)) {
+                //initialize..
+                //                    alert('initing');
+                roomViews[activeRoom] = '<span class="chat-sep">Room ' + allRooms[activeRoom] + '</span><hr />';
+            }
+            $('#chat-area').html(roomViews[activeRoom]);
+            $('#usr-list').html("");
+            if (!(activeRoom in roomUserLists)) {
+                //initialize..
+                $('#usr-list').append('Loading..');
+            } else {
+                $.each(roomUserLists[activeRoom], function (key, value) {
+                    $('#usr-list').append(value + "<br />");
+                });
+            }
+            //and do other things.. load content etc.
+        }
+
+        function updateChatView(msglist) {
+            $.each(msglist.find(".msg"), function (key, value) {
+                roomViews[$(value).attr('rid')] += " " + $(value).html() + "<br />";
+            });
+            $('#chat-area').html(roomViews[activeRoom]);
+            $('#chat-area').scrollTop($("#chat-area").prop("scrollHeight"));
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, 'chat-area']);
+        }
+
+        function sendMsg(msg) {
+            //to current active chatroom..
+            //show..
+            if (!getIsTexValid())
+                return 0;
+            setLabel($("#send-btn"), "Sending..", "info");
+            getTexField().attr('readonly', 'readonly');
+            XE.postAjax('chat_sendmsg', {
+                routeParamsOb: {rid: activeRoom},
+                postDataOb: {msg: transViewAdv(getTexCode())},
+                successFn: function (msglist) {
+                    setTexCode('');
+                    updateChatView(msglist);
+                    setLabel($("#send-btn"), "Sent", "success");
+                    setTimeout(function () {
+                        setLabel($("#send-btn"), "Send", "warning");
+                    }, 2000);
+                    getTexField().removeAttr('readonly');
+                }
+            });
+        }
+
+        function updateUserListView(ulist) {
+            rid = $(ulist.find(".rid")[0]).html();
+            roomUserLists[rid] = [];
+            $.each(ulist.find(".uname"), function (key, value) {
+                roomUserLists[rid].push($(value).html());
+            });
+        }
+
+        function getUserList() {
+            XE.postAjax('chatroom_users', {routeParamsOb: {rid: activeRoom}, successFn: updateUserListView});
+        }
+
+        var lastRoomUpCount = 0;
+        var lastUserlistUpCount = 6;
+        function pingLoop() {
+            XE.postAjax('chat_ping', {
+                successFn: function (msglist) {
+                    updateChatView(msglist);
+                });
+            lastRoomUpCount++;
+            if (lastRoomUpCount > 10) {
+                getRoomsList();
+                lastRoomUpCount = 0;
+            }
+            lastUserlistUpCount++;
+            if (lastUserlistUpCount > 8) {
+                getUserList();
+                lastUserlistUpCount = 0;
+            }
+
+        }
+
+        $(function () {
+            $("#solutionSrc").keydown(function (e) {
+                // Enter was pressed without shift key
+                if (e.keyCode == 13 && !e.shiftKey) {
+                    // prevent default behavior
+                    e.preventDefault();
+                    //instead, transmit the message..
+                    sendMsg(getTexCode());
+                }
+            });
+
+            $('#send-btn').on('click', function () {
+                sendMsg(getTexCode());
+            });
+            getRoomsList();
+            pingLoop();
+            setInterval(pingLoop, 5000);
+        });</script>
+
+
+    {% if is_granted('ROLE_SU') %}
+        <div id="new-room-dialog" title="New room">
+            <form>
+                <fieldset>
+                    <label for="name">Room Name</label>
+                    <input type="text" id="new-room-name" value="" class="text ui-widget-content ui-corner-all">
+                    <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+                </fieldset>
+            </form>
+        </div>
+        <script>
+            var newRoomDialog;
+            function addRoom() {
+                if ($("#new-room-name").val().length == 0) {
+                    newRoomDialog.dialog("close");
+                    return false;
+                }
+                XE.postAjax('chatroom_create', {
+                    routeParamsOb: {rname: $("#new-room-name").val()}, successFn: function (rlist) {
+                        updateRoomsModelView(rlist);
+                        newRoomDialog.dialog("close");
+                    });
+                return true;
+            }
+
+            function delRoom(rid) {
+                XE.postAjax('chatroom_delete', {
+                    routeParamsOb: {rid: rid}, successFn: function (rlist) {
+                        updateRoomsModelView(rlist);
+                    });
+                return true;
+            }
+
+            $(function () {
+                newRoomDialog = $("#new-room-dialog").dialog({
+                    autoOpen: false,
+                    height: 300,
+                    width: 350,
+                    modal: true,
+                    buttons: {
+                        "Create room": addRoom,
+                        Cancel: function () {
+                            $(this).dialog("close");
+                        }
+                    },
+                    close: nulFn
+                });
+                $("#new-room-button").on("click", function () {
+                    newRoomDialog.dialog("open");
+                });
+                $("#new-room-dialog").find("form").on("submit", function (event) {
+                    event.preventDefault();
+                    addRoom();
+                });
+
+                $('#reload-room-button').on('click', function () {
+                    getRoomsList();
+                });
+            });
+        </script>
+    {% endif %}
+    <style>
+        .min-padding {
+            padding: 0px !important;
+            margin: 2px !important;
+        }
+
+        .room-joined {
+            font-weight: bold;
+            border: 1px solid black;
+            border-radius: 2px;
+        }
+
+        .room-unjoined {
+            color: gray;
+            font-style: italic;
+        }
+
+        .room-active {
+            font-weight: bold;
+        }
+
+        .chat-sep {
+            font-style: italic;
+            color: gray;
+        }
+
+        .usr-time {
+            color: #BBBBBB;
+            /*font-family: monospace;*/
+            font-size: 0.6em;
+        }
+
+        .usr-name {
+            color: #888888;
+            /*font-family: monospace;*/
+            font-size: 0.8em;
+        }
+
+    </style>
+{% endblock %}

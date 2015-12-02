@@ -1,0 +1,58 @@
+#  This file is part of Mathstreams.
+#
+#  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+#
+#  Mathstreams is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+su:
+    path:     /home
+    defaults: { _controller: MagnetsMathgymBundle:SU:index }
+
+su_root:
+    path:     /
+    defaults: { _controller: FrameworkBundle:Redirect:redirect, route: su, permanent: true }
+
+su_users:
+    path:     /users
+    defaults: { _controller: MagnetsMathgymBundle:SU:users }
+
+su_streams:
+    path:     /streams
+    defaults: { _controller: MagnetsMathgymBundle:SU:streams }
+
+su_rooms:
+    path:     /rooms
+    defaults: { _controller: MagnetsMathgymBundle:SU:rooms }
+
+flash_test:
+    path:     /flash
+    defaults: { _controller: MagnetsMathgymBundle:Index:flash }
+
+su_stream_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/Stream/superuser.yml"
+    prefix: /stream
+
+su_lesson_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/Lesson/superuser.yml"
+    prefix: /lesson
+
+su_chat_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/Chat/superuser.yml"
+    prefix: /chat
+
+special_actions:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/App/commands.yml"
+    prefix: /exec
+
+

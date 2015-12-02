@@ -1,0 +1,128 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3 text-center">
+            <h1>{{ lesson.name }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        {{ lesson.content  }}
+        {# todo: index #}
+        {#<div class="col-md-3">#}
+        {##}
+        {#<span id="lesIndex" style="position:absolute;top:100px;">#}
+        {#Index#}
+        {#</span>#}
+        {#</div>#}
+        <div class="col-md-9 col-md-offset-2">
+            <div class="container-fluid" style="overflow-y: scroll;height:70vh">
+                <div id="main-blocks-wrap" class="tex-render">
+                    Loading..
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        //this is all the block-related stuff
+        var mainBlocks = [];
+
+        var curBlkId = -1;
+        var curBlkMode = 0;//0->none,1->sel,2->edit
+
+        function insertBlk(blkType, blkLoc, blkData) {
+            blkLoc = (typeof blkLoc === 'undefined') ? "end" : blkLoc;
+            if (blkLoc == "cur") {
+                blkInsPos = curBlkId;
+            } else {
+                blkInsPos = mainBlocks.length;
+            }
+            blkContentPre = "<div class='mainBlock' data-blkid='" + blkInsPos + "' style='position:relative'" +
+                    " title='Click to select; double-click to edit' ><div class='toolbarHolder' />";
+            blkContentPost = "</div>";
+            if (blkType == "p") {
+                blkContentPrePre = "<p class='blockContent'>";
+                blkContentContent = (typeof blkData === 'undefined') ? "This is a sample paragraph." : blkData;
+                blkContentPostPost = "</p>";
+            } else if (blkType == "h2") {
+                blkContentPrePre = "<h2 class='blockContent'>";
+                blkContentContent = (typeof blkData === 'undefined') ? "This is a sample level2 heading" : blkData;
+                blkContentPostPost = "</h2>";
+            } else
+                return;
+            newBlock = {"type": blkType, "val": blkContentContent};
+            blkContent = blkContentPre + blkContentPrePre + blkContentContent + blkContentPostPost + blkContentPost;
+            if (blkLoc == "cur") {
+                //need to shift all blk ids..
+                //clearMode();
+                //first, shift all blockIds..
+                for (i = mainBlocks.length - 1; i >= blkInsPos; i--) {
+                    getBlkById(i).attr("data-blkid", i + 1);
+                }
+                //next, insert into mainBlocks
+                mainBlocks.splice(blkInsPos, 0, newBlock);
+
+                //finally, insert the block.. before the next one..
+                getBlkById(blkInsPos + 1).before(blkContent);
+            } else {
+                //clearMode();
+                mainBlocks.splice(blkInsPos, 0, newBlock);
+                $("#main-blocks-wrap").append(blkContent);
+            }
+            //reBindFields();
+        }
+        function getBlkById(givenId) {
+            return $("[data-blkid=" + givenId + "]");
+        }
+        function loadAll(data) {
+            $("#main-blocks-wrap").html("");
+            codeBlkArr = JSON.parse(data);
+            //blkId = 0;
+            $.each(codeBlkArr, function (key) {
+                if (codeBlkArr[key]["type"] == "p") {
+                    insertBlk("p", "end", codeBlkArr[key]["val"]);
+                } else if (codeBlkArr[key]["type"] == "ggb" && codeBlkArr[key]["val"].match(/^[0-9]+$/)) {
+                    insertBlk("ggb", "end", codeBlkArr[key]["val"]);
+                } else if (codeBlkArr[key]["type"] == "h2") {
+                    insertBlk("h2", "end", codeBlkArr[key]["val"]);
+                }
+            });
+        }
+    </script>
+    <style>
+        .mainBlock {
+            padding: 5px;
+        }
+
+        p.blockContent {
+            padding-left: 15px;
+        }
+    </style>
+
+    <script>
+        $(function () {
+            loadAll(JSON.parse('{{ lesson.content|e('js') }}'));
+        });
+    </script>
+
+{% endblock %}

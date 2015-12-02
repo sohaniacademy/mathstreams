@@ -1,0 +1,274 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::barebase.html.twig' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <a href="{{ path('problems') }}">&laquo; Back to home</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            {{ include('MagnetsMathgymBundle:UI:questionView.frag.html.twig') }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            {% if draftStatus == "Submitted" %}
+            <h3>Your score: {{ draft.score }}</h3>
+            {#<ul class="nav nav-tabs" role="tablist">#}
+            {#<li role="presentation" class="active"><a href="#tabs-1" role="tab" data-toggle="tab">What is Mathstreams?</a></li>#}
+            {#<li role="presentation"><a href="#tabs-2" aria-controls="profile" role="tab" data-toggle="tab">Why use Mathstreams?</a></li>#}
+            {#<li role="presentation"><a href="#tabs-3" aria-controls="messages" role="tab" data-toggle="tab">How to get started?</a></li>#}
+            {#<li role="presentation"><a href="#tabs-4" aria-controls="settings" role="tab" data-toggle="tab">How to solve each problem?</a></li>#}
+            {#</ul>#}
+
+            <div id="tabs">
+                {#<ul>#}
+                <ul class="nav nav-tabs" role="tablist">
+                    {% if problem.qtype == 'sub' %}
+                        <li role="presentation"><a href="#tabs-1" role="tab" data-toggle="tab">Your
+                                solution</a></li>
+                    {% endif %}
+                    <li role="presentation"><a href="#tabs-2" role="tab" data-toggle="tab">Official solution</a></li>
+                    {% if problem.qtype == 'sub' %}
+                        <li role="presentation"><a href="#tabs-3" role="tab" data-toggle="tab">Compare
+                                side-by-side</a></li>
+                        <li role="presentation"><a href="#tabs-4" role="tab" data-toggle="tab">All submitted
+                                solutions</a></li>
+                    {% endif %}
+                </ul>
+                <div class="tab-content">
+                    {% if problem.qtype == 'sub' %}
+                        <div role="tabpanel" class="tab-pane fade in" id="tabs-1">
+                            <button id="review-btn" class="btn btn-xs btn-primary">View reviews</button>
+                            <script>
+                                $('#review-btn').on('click', function () {
+                                    document.location.href = Routing.generate('viewsol', {
+                                        pid:{{ problem.id }},
+                                        uid: {{ draft.user.id }}
+                                    });
+                                });</script>
+                            <hr/>
+                            {% set tex_src %}
+                                {{ draft.response|raw|nl2br }}
+                            {% endset %}
+                            {{ include('MagnetsMathgymBundle:UI:texArea.frag.html.twig', { tex_src: tex_src, tex_id: 'draft-response' }) }}
+                        </div>
+                    {% endif %}
+                    <div role="tabpanel" class="tab-pane fade in" id="tabs-2">
+                        {% set tex_src %}
+                            {{ problem.solution|raw|nl2br }}
+                        {% endset %}
+                        {{ include('MagnetsMathgymBundle:UI:texArea.frag.html.twig', { tex_src: tex_src, tex_id: 'prob-soln' }) }}
+                    </div>
+                    {% if problem.qtype == 'sub' %}
+                        <div role="tabpanel" class="tab-pane fade in" id="tabs-3">
+                            <table class="full-width">
+                                <tr>
+                                    <th style="width:50%">Your solution</th>
+                                    <th>Official solution</th>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        {% set tex_src %}
+                                            {{ draft.response|raw|nl2br }}
+                                        {% endset %}
+                                        {{ include('MagnetsMathgymBundle:UI:texArea.frag.html.twig', { tex_src: tex_src, tex_id: 'draft-resp-cmp' }) }}
+                                    </td>
+                                    <td id='off-sol'>
+                                        {% set tex_src %}
+                                            {{ problem.solution|raw|nl2br }}
+                                        {% endset %}
+                                        {{ include('MagnetsMathgymBundle:UI:texArea.frag.html.twig', { tex_src: tex_src, tex_id: 'prob-soln-cmp' }) }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div role="tabpanel" class="tab-pane fade in" id="tabs-4">
+                            <table class="table table-hover full-width">
+                                <thead>
+                                <tr class="row">
+                                    <th>No.</th>
+                                    <th>Submitted by</th>
+                                    <th>Score</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for sol in sols %}
+                                    <tr class="row sol-row" targetIdx="{{ sol.user.id }}">
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ sol.user.fullname }}</td>
+                                        <td>{{ sol.score }}</tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <style>
+                            .sol-row {
+                                cursor: pointer;
+                            }
+                        </style>
+
+                        <script>
+                            $(".sol-row").on("click", function () {
+                                document.location.href = Routing.generate('viewsol', {
+                                    pid:{{ problem.id }},
+                                    uid: $(this).attr('targetIdx')
+                                });
+                            });</script>
+                    {% endif %}
+                </div>
+                {% elseif draftStatus == "Draft" %}
+                    {% if problem.qtype == 'sub' %}
+                        <h2>Your draft:</h2>
+                        <div style='padding-left: 100px;'>
+                            {{ draft.response|raw|nl2br }}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            <br/>
+            {% if (draftStatus == "NoneExists" or draftStatus == "Draft") %}
+                <button id="start-solve"
+                        class='btn btn-primary'>{% if draftStatus == "NoneExists" %}Start{% else %}Continue{% endif %}
+                    solving..
+                </button>
+                <script>
+                    $(function () {
+                        $("#start-solve").on("click", function () {
+                            document.location.href = "{{ path('solveproblem',{ pid: problem.id }) }}";
+                        });
+                    });</script>
+            {% endif %}
+        </div>
+    </div>
+    {% if (draftStatus == "Submitted") or (is_granted('ROLE_ADMIN')) or (problem.author == app.user) %}
+        <hr/>
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+
+                Rating so far: <b>{{ rating[0]|default('N/A') }}/10</b>
+                <small>by {{ rating[1]|default('N/A') }} votes</small>
+                <br/>
+                Rate this problem: <br/>
+                {{ MX.rating() }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>Comments</h3>
+                <table id='comments-table' class="table">
+                    <tbody>
+                    <tr>
+                        <td>Loading..</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div id="submitArea" class="col-md-8 col-md-offset-2">
+                <div class="well">
+                    <a href="#" id="commentInput-toggle" style="text-decoration:none;"><span id="toggle-icon"></span>
+                        Add a comment[Optional<sup class='tooltipFlag'>?</sup>]</a>
+
+                    <div id="commentWidget">
+                        {% set toInject %}
+                            <button id="submit-btn" type="button" class="btn btn-warning">Submit</button>
+                        {% endset %}
+                        {{ include('MagnetsMathgymBundle:UI:texInput.frag.html.twig', { 'tex_height': '10vh', 'injected':toInject }) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {#<div id="com-help">#}
+        {#By leaving a comment, you can:#}
+        {#<ul>#}
+        {#<li>Maintain a virtual 'notebook' of all your submitted solutions#}
+        {#<li>Compare your solution to the official one side-by-side#}
+        {#<li>Get feedback if any other users review your solution, and leave helpful comments#}
+        {#</ul>#}
+        {#</div>#}
+        <script>
+            $(function () {
+                $('#com-q').attr('title', function () {
+                    return $("#com-help").remove().html()
+                })
+                $('#commentWidget').hide();
+                $("#toggle-icon").html("&#9658;");
+                $('#commentInput-toggle').click(function (e) {
+                    // slide down the corresponding div if hidden, or slide up if shown
+                    var elToSlide = $('#commentWidget');
+                    if (elToSlide.css('display') == 'none') {
+                        $("#toggle-icon").html("&#9660;");
+                    } else {
+                        $("#toggle-icon").html("&#9658;");
+                    }
+                    elToSlide.slideToggle();
+                    $('#submitArea').toggleClass("col-md-8 col-md-offset-2 col-md-12", 400);
+                    // set the current item as active
+                    //$(this).parent().toggleClass('active');
+                    e.preventDefault();
+                });
+                $('#submit-btn').on('click', function () {
+                    sendMsg(getTexCode());
+                });
+                //load comments for the first time..
+                XE.postAjax('viewcomments', {
+                    routeParamsOb: {pid:{{ problem.id }}, uid: -1},
+                    successFn: function (resp) {
+                        $('#comments-table tbody').html("");
+                        $.each(resp.comments, function (key, value) {
+                            $('#comments-table tbody').append('<tr><td>' + '<b>' + value.author + '</b>:' + value.msg + '</td></tr>');
+                        });
+                    }
+                });
+            });
+            function sendMsg(msg) {
+                if (!getIsTexValid())
+                    return 0;
+                setLabel($("#submit-btn"), "Submitting..", "info");
+                getTexField().attr('readonly', 'readonly');
+                XE.postAjax('addcomment', {
+                    routeParamsOb: {pid:{{ problem.id }}, uid: -1},
+                    postDataOb: {msg: transViewAdv(getTexCode())},
+                    successFn: function () {
+                        //reload the page..
+                        document.location.reload();
+                    }
+                });
+            }
+
+            function sendRating(score) {
+                XE.postAjax('addproblemrating', {
+                    routeParamsOb: {pid:{{ problem.id }}},
+                    postDataOb: {score: score},
+                    successFn: function () {
+                        //reload the page..
+                        document.location.reload();
+                    }
+                })
+            }
+        </script>
+    {% endif %}
+{% endblock %}

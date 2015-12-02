@@ -1,0 +1,56 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::frag.html.twig' %}
+
+{% block frag_body %}
+    {% if app.user %}
+        Hello, {{ app.user.fullname }}<br/>
+        <a href="{{ path('user') }}">Main page</a>&nbsp;|&nbsp;<a
+            href="{{ path('settings') }}">Settings</a>&nbsp;|&nbsp;<a
+            href="{{ path('logout') }}" data-xe-ignore>Sign out</a>
+    {% else %}
+        <h3>Sign in</h3>
+        <form action="{{ path('login_check') }}" method="post" id="login">
+            <div class="form-group">
+                <label for="email" class="sr-only">Email address</label>
+                <input type="email" id="email" class="form-control input-sm mono-font" placeholder="Email address" required
+                       autofocus
+                       name="_username" value="{{ last_username|default("") }}"/>
+            </div>
+            <div class="form-group">
+                <label for="password" class="sr-only">Password</label>
+                <input type="password" id="password" class="form-control input-sm mono-font" placeholder="Password" required
+                       name="_password"/>
+            </div>
+            {#
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" value="remember-me"> Remember me
+                </label>
+            </div>
+        #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <input type="hidden" name="_target_path" value="{{ path('user') }}"/>
+            <button type="submit" class="btn btn-primary">Sign in</button>
+        </form>
+        <div class="text-center"><a href="{{ path('forgotpass') }}">Forgot password? Click to reset</a><br/>
+            <a href="{{ path('register') }}">New user? Click to register</a></div>
+    {% endif %}
+{% endblock %}

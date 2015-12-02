@@ -1,0 +1,160 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::plug.html.twig' %}
+
+{% block plug_body %}
+    <div id="flash-area" ngRoot="ngFlashApp_{{ seed[0] }}" ng-controller="ngCtrl" ng-cloak>
+        <div ng-repeat="x in flash">
+            <div class="alert fade in"
+                 ng-class="{'alert-success':flT('success',x),'alert-info':flT('info',x),'alert-warning':flT('warning',x),'alert-danger':flT('danger',x)}">
+                <span class="glyphicon" style="font-size:1.3em;"
+                      ng-class="{'glyphicon-ok-sign':flT('success',x),'glyphicon-info-sign':flT('info',x),'glyphicon-exclamation-sign':flT('warning',x),'glyphicon-remove-sign':flT('danger',x)}"
+                      aria-hidden="true"></span>
+                <span class="sr-only">{{ MX.ng('x.type') }} </span><span ng-bind-html="x.msg"></span><br/>
+                <a href="#" ng-click="dismiss(x.id)" class="mono-font" style="font-size:0.8em;" aria-label="close">Close
+                    this message</a>
+            </div>
+        </div>
+        {# Error has been moved into flash.. #}
+        {#{% if error.message is defined %}#}
+        {#<div class="alert alert-danger fade in" role="alert">#}
+        {#<span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>#}
+        {#<span class="sr-only">Error: </span>{{ error.message }}</div>#}
+        {#<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>#}
+        {#{% endif %}#}
+    </div>
+    <div class="modal fade" id="myErrorModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="z-index:2000 !important">
+        <div class="modal-dialog modal-lg" style="width:90%" role="document">
+            <div class="modal-content">
+                <span class="modal-errorContent" style="color: red; font-size: 1.3em; text-align: center;"></span>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog modal-lg" style="width:90%;" role="document">
+            <div class="modal-content"></div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var ngApp = angular.module('ngFlashApp_{{ seed[0] }}', []);
+            ngApp.controller('ngCtrl', ['$scope', '$sce', function ($scope, $sce) {
+
+                $scope.flash = [];
+                $scope.updateFlash = function (ob) {
+                    if (ob['flash']) {
+                        $scope.addAllFlash(ob['flash']);
+
+                        $scope.$apply(); //TODO: will probably remove this, after migrating XE to $http
+                    }
+                };
+                $scope.createHandler = function () {
+                    var flashInit = {{ MX.jsEnc(app.session.flashbag.all) }};
+                    $scope.addAllFlash(flashInit);
+
+                    XE.addCallback('flashHandler', $scope.updateFlash);
+                };
+                $scope.destroyHandler = function () {
+                    //nothing to do, pretty much..
+                    $scope.flash = {};
+                    XE.delCallback('flashHandler');
+                };
+                $scope.addAllFlash = function (flOb) {
+                    for (var fl in flOb['success']) {
+                        $scope.addFlash('success', flOb['success'][fl]);
+                    }
+                    for (var fl in flOb['info']) {
+                        $scope.addFlash('info', flOb['info'][fl]);
+                    }
+                    for (var fl in flOb['warning']) {
+                        $scope.addFlash('warning', flOb['warning'][fl]);
+                    }
+                    for (var fl in flOb['danger']) {
+                        $scope.addFlash('danger', flOb['danger'][fl]);
+                    }
+                };
+                $scope.addFlash = function (flType, flMsg) {
+                    $scope.flash.push({
+                        "type": flType,
+                        "msg": $sce.trustAsHtml(flMsg),
+                        "id": Math.floor(1000000 * Math.random())
+                    });
+                };
+                $scope.dismiss = function (flId) {
+                    for (var fl in $scope.flash) {
+                        if ($scope.flash[fl]["id"] == flId) {
+                            $scope.flash.splice(fl, 1);
+                        }
+                    }
+
+                }
+                $scope.flT = function (fltype, ob) {
+                    return (ob['type'] == fltype);
+                };
+                $scope.createHandler();
+            }]);
+        }());
+        //modal exposed outside closure:
+        //maybe in future, will need XE support..
+        function setModal(content) {
+            $("#myModal .modal-content").html(content);
+            $("#myModal").modal();
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, 'myModal']);
+        }
+
+        function setErrorModal(content) {
+            $("#myErrorModal .modal-errorContent").html(content);
+            $("#myErrorModal").modal();
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, 'myErrorModal']);
+        }
+
+        XE.addCallback('helpHooks', function () {
+            $(".helpNode").each(function () {
+                $(this).qtip({
+                    style: {
+                        classes: 'qtip-bootstrap qtip-shadow'
+                    },
+                    position: {
+                        viewport: $(window),
+                        adjust: {
+                            method: 'flip flip'
+                        }
+                    },
+                    content: {
+                        title: {
+                            text: $(this).attr("data-helpTitle"),
+                            button: 'Close',
+                        },
+                        text: $("template[data-helpText='" + $(this).attr("data-helpLink")).html(),
+                    },
+                    show: {
+                        delay: 200,
+                    },
+                    hide: {
+                        fixed: true,
+                        delay: 300,
+                    },
+                });
+            });
+        });
+
+    </script>
+{% endblock %}

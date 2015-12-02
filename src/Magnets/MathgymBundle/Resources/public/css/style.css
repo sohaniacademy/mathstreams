@@ -1,0 +1,220 @@
+/*
+ *  This file is part of Mathstreams.
+ *
+ *  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ *
+ *  Mathstreams is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/* Fixed elements */
+/* Important z-index layout:
+    #main : 0 (implicit);
+    .navbar-fixed-top container: 1030; This should be the topmost; so no z-indices to exceed this value!
+
+    Accordingly:
+
+    Loading overlay screen: 500
+    Loading text: 550
+    Loading progressbar: 600
+
+    ; This should also be the topmost, so no body elements to exceed this value!
+    TexInputAdvanced floating editor: 100
+*/
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+body {
+    /* Margin bottom = footer height */
+    margin-bottom: 30px;
+    font-family: Verdana, sans-serif;
+    font-size: 14px;
+    color: black;
+}
+
+.navbar-brand {
+    padding: 0px 10px 0px 10px;
+}
+
+#uname {
+    color: white;
+    font-weight: bold;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 30px;
+    box-sizing: border-box;
+    background-color: #222;
+}
+
+#copy-notice {    
+    padding: 0px;
+    line-height: 30px;
+    color:#ddd;
+}
+
+/* overrides */
+.center {
+    text-align:center;
+}
+
+.full-width {
+    width:100% !important;
+}
+
+.full-height {
+    height:100% !important;
+}
+
+h1 small, h2 small, h3 small, h4 small, h5 small, h6 small {
+    font-family: 'Ubuntu Mono', monospace !important;
+    font-size: 0.8em !important;
+    color: #555555 !important;
+}
+
+h2, h3 {
+    margin: 5px;
+}
+
+.button-inline .ui-button-text {
+    font-size: 0.7em;
+    padding: 0.3em 0.3em;
+}
+
+/*.tooltip-inner {*/
+    /*max-width: 400px !important;*/
+    /*!* If max-width does not work, try using width instead *!*/
+    /*!*width: 400px;*!*/
+/*}*/
+
+.ui-resizable-s {
+    border-top: 1px solid black;
+    border-bottom: 1px double black;
+}
+
+/* Convenience classes */
+.sans-font {
+    font-family: Verdana, sans-serif;
+}
+
+.mono-font {
+    font-family: 'Ubuntu Mono', monospace;
+}
+
+textarea.mono-font, .form-control.mono-font {
+    font-size: 16px;
+    color: black;
+}
+
+.tex-render {
+    font-family: "Computer Modern", serif;
+    font-size:1.2em;
+}
+
+.not-started {
+    color: #FF002D;
+}
+.in-progress {
+    color: #FF9823;
+}
+.submitted {
+    color: #00DD50;
+}
+
+.blink-basic {
+    box-shadow: none;
+    background-color: white;
+    color: black;
+    z-index: 1;
+
+    transition: box-shadow .5s, background-color .5s, color .5s;
+    -moz-transition: box-shadow .5s, background-color .5s, color .5s;
+    -webkit-transition: box-shadow .5s, background-color .5s, color .5s;
+}
+
+.blink-highlighted {
+    box-shadow: 1px 1px 4px orange;
+    background-color: black;
+    color: white;
+    z-index: 1;
+
+    transition: box-shadow .5s, background-color .5s, color .5s;
+    -moz-transition: box-shadow .5s, background-color .5s, color .5s;
+    -webkit-transition: box-shadow .5s, background-color .5s, color .5s;
+}
+
+.label-as-badge {
+    border-radius: 1em;
+}
+
+/* loading wrapper and progBar */
+.loading-overlay {
+    position: relative;
+    text-align: center;
+    z-index: 500;
+}
+
+.loading-overlay .loading-wrapper {
+    display: inline-block;
+    margin: 5px auto;
+    padding: 5px;
+    top: 2px;
+    width:99%;
+    z-index: 550;
+    font-family: monospace;
+    font-weight: bold;
+    background: rgba(255,255,255,0.8);
+}
+
+.progbar {
+    display: block;
+    text-align: center;
+    width: 0;
+    height: 5px;
+    background: #5ec5f0;
+    z-index: 600;
+    /* position: absolute; */
+    top: 3px;
+    margin:0px;
+    box-shadow: 0px 0px 5px green;
+    transition: width 0.3s, opacity 0s;
+}
+
+.progbar._hide {
+    opacity: 0;
+    transition: width 0s, opacity 1.0s;
+}
+
+.table-hover tr {
+    transition: background 0.7s;
+}
+
+/*.table-hover tr.th-row {*/
+    /*background: #eeeeee;*/
+    /*transition: background 0.7s;*/
+/*}*/
+
+.table-hover tr.th-row:hover {
+    background: #f8f8f8;
+}
+
+.table-hover tr:not(.th-row):hover {
+    box-shadow: 0px 0px 2px black;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease 0.1s;
+}

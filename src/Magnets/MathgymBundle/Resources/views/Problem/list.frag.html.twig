@@ -1,0 +1,128 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::frag.html.twig' %}
+
+{% block frag_body %}
+    {% if problems|length == 0 %}
+        <div class="panel-body">
+            <span class="text-center full-width">No records to show</span>
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr class="row">
+                    <th class="text-center">#</th>
+                    <th>Label</th>
+                    {% if short != true %}
+                        <th class="text-center">Author</th>
+                        <th class="text-center">Type</th>
+                        <th class="text-center"></th>
+                        <th class="text-center">Score</th>
+                        <th class="text-center">Actions</th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody>
+                {% set qtypes = { 'sub':'Subjective', 'num':'Numerical', 'mcq':'Multiple-choice', '':'' } %}
+                {% set stats = [ "<span class='not-started'>Not started</span>","<span class='in-progress'>In progress</span>","<span class='submitted'>Submitted</span>"] %}
+                {% if short == true %}
+                    {% set problemsToShow = problems[0:min(3,problems|length)] %}
+                {% else %}
+                    {% set problemsToShow = problems %}
+                {% endif %}
+                {% for problem in problemsToShow %}
+                    <tr class="row problem-row" targetIdx="{{ problem.id }}"
+                        data-xe-url="{{ path('viewproblem', { pid: problem.id } ) }}">
+                        <td class="text-center">{{ loop.index }}</td>
+                        <td>
+                            <a href="{{ path('viewproblem', { pid: problem.id } ) }}">{{ problem.label|truncate(20,true) }}</a>
+                        </td>
+                        {% if short != true %}
+                            <td class="text-center">{{ problem.author.fullname }}</td>
+                            <td class="text-center">{{ qtypes[problem.qtype] }}</td>
+                            <td class="text-center">{{ stats[status[problem.id]]|raw }}</td>
+                            <td class="text-center">{{ scores[problem.id]|default('N/A') }}</td>
+                            <td class="text-center actions-row">
+                                {% if is_granted('ROLE_ADMIN') or (problem.author == app.user) %}
+                                    <button class="edit-button btn btn-xs btn-info" probId="{{ problem.id }}">Edit
+                                    </button>
+                                    <button class="del-button btn btn-xs btn-danger" probId="{{ problem.id }}">Delete
+                                    </button>
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                {% if problemsToShow|length < problems|length %}
+                    <tr class="row">
+                        <td colspan="2" class="text-center">
+                            Showing {{ problemsToShow|length }} of {{ problems|length }}. <a>View all</a>
+                        </td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% if short != true %}
+            <div id="del-problem-confirm" title="Delete problem?">
+                <p><span class="ui-icon ui-icon-alert pull-left" style="margin:0 7px 20px 0;"></span>Are you sure?</p>
+            </div>
+        {% endif %}
+    {% endif %}
+    {% if short != true %}
+        <script>
+            $(function () {
+                /*
+                 $(".problem-row").on("click", function () {
+                 document.location.href = Routing.generate('viewproblem', {pid: $(this).attr('targetIdx')});
+                 });
+                 */
+                var delProblemDialog = $("#del-problem-confirm").dialog({
+                    autoOpen: false,
+                    modal: true,
+                    buttons: {
+                        "Delete problem": function () {
+                            document.location.href = Routing.generate('delproblem', {pid: $(this).data('targetIdx')});
+                            $(this).dialog("close");
+                        },
+                        Cancel: function () {
+                            $(this).dialog("close");
+                        }
+                    }
+                });
+                $(".edit-button").on("click", function (e) {
+                    e.stopPropagation();
+                    document.location.href = Routing.generate('editproblem', {pid: $(this).attr('probId')});
+                });
+                $(".del-button").on("click", function (e) {
+                    e.stopPropagation();
+                    delProblemDialog.data('targetIdx', $(this).attr('probId'))
+                            .dialog("open");
+                });
+            });
+        </script>
+    {% endif %}
+    <style>
+        .problem-row {
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}

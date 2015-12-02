@@ -1,0 +1,154 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <a href="{{ path('viewproblem', { pid: problem.id }) }}">&laquo; Back to problem</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            {{ include('MagnetsMathgymBundle:UI:questionView.frag.html.twig') }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3>Solution by {{ draft.user.fullname }}</h3>
+                </div>
+                <div class="panel-body tex-render">
+                    {% set tex_src %}
+                        {{ draft.response|raw|nl2br }}
+                    {% endset %}
+                    {{ include('MagnetsMathgymBundle:UI:texArea.frag.html.twig', { tex_src: tex_src, tex_id: 'draft-resp' }) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+
+            Rating so far: <b>{{ rating[0]|default('N/A') }}/10</b>
+            <small>by {{ rating[1]|default('N/A') }} votes</small>
+            <br/>
+            Rate this solution: <br/>
+            {{ MX.rating() }}
+        </div>
+    </div>
+    <br/>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <h3>Comments</h3>
+            <table id='comments-table' class="table">
+                <tbody>
+                <tr>
+                    <td>Loading..</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div id="submitArea" class="col-md-8 col-md-offset-2">
+            <div class="well">
+                <a href="#" id="commentInput-toggle" style="text-decoration:none;"><span id="toggle-icon"></span>Add a
+                    comment[Optional<sup id='com-q'>?</sup>]</a>
+
+                <div id="commentWidget">
+                    {% set toInject %}
+                        <button id="submit-btn" type="button" class="btn btn-warning">Submit</button>
+                    {% endset %}
+                    {{ include('MagnetsMathgymBundle:UI:texInput.frag.html.twig', { 'tex_height': '10vh', 'injected':toInject }) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="com-help">
+        By leaving a comment, you can:
+        <ul>
+            <li>Maintain a virtual 'notebook' of all your submitted solutions
+            <li>Compare your solution to the official one side-by-side
+            <li>Get feedback if any other users review your solution, and leave helpful comments
+        </ul>
+    </div>
+    <script>
+        $(function () {
+            $('#com-q').attr('title', function () {
+                return $("#com-help").remove().html()
+            })
+            $('#commentWidget').hide();
+            $("#toggle-icon").html("&#9658;");
+            $('#commentInput-toggle').click(function (e) {
+                // slide down the corresponding div if hidden, or slide up if shown  
+                var elToSlide = $('#commentWidget');
+                if (elToSlide.css('display') == 'none') {
+                    $("#toggle-icon").html("&#9660;");
+                } else {
+                    $("#toggle-icon").html("&#9658;");
+                }
+                elToSlide.slideToggle();
+                $('#submitArea').toggleClass("col-md-8 col-md-offset-2 col-md-12", 400);
+                // set the current item as active
+                //$(this).parent().toggleClass('active');
+                e.preventDefault();
+            });
+            $('#submit-btn').on('click', function () {
+                sendMsg(getTexCode());
+            });
+            //load comments for the first time..
+            XE.postAjax('viewcomments', {
+                routeParamsOb: {pid:{{ problem.id }}, uid: {{ draft.user.id }}},
+                successFn: function (resp) {
+                    $('#comments-table tbody').html("");
+                    $.each(resp.comments, function (key, value) {
+                        $('#comments-table tbody').append('<tr><td>' + '<b>' + value.author + '</b>:' + value.msg + '</td></tr>');
+                    });
+                }
+            });
+        });
+        function sendMsg(msg) {
+            if (!getIsTexValid())
+                return 0;
+            setLabel($("#submit-btn"), "Submitting..", "info");
+            getTexField().attr('readonly', 'readonly');
+            XE.postAjax('addcomment', {
+                routeParamsOb: {pid:{{ problem.id }}, uid: {{ draft.user.id }}},
+                postDataOb: {msg: transViewAdv(getTexCode())},
+                successFn: function () {
+                    //reload the page..
+                    document.location.reload();
+                }
+            });
+        }
+        function sendRating(score) {
+            XE.postAjax('addsolrating', {
+                routeParamsOb: {sid:{{ draft.id }}},
+                postDataOb: {score: score},
+                successFn: function () {
+                    //reload the page..
+                    document.location.reload();
+                }
+            });
+        }
+    </script>
+{% endblock %}

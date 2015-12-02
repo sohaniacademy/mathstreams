@@ -1,0 +1,159 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% macro stats_str(el) %}
+    <span style="font-weight:bold"><span class="not-started">{{ el[0] }}</span>&nbsp;/&nbsp;<span
+                class="in-progress">{{ el[1] }}</span>&nbsp;/&nbsp;<span class="submitted">{{ el[2] }}</span></span>
+    {# <div class="progress">
+        <div class="progress-bar progress-bar-success" style="width: 35%">
+            <span class="sr-only">35% Complete (success)</span>
+        </div>
+        <div class="progress-bar progress-bar-warning progress-bar-striped" style="width: 20%">
+            <span class="sr-only">20% Complete (warning)</span>
+        </div>
+        <div class="progress-bar progress-bar-danger" style="width: 10%">
+            <span class="sr-only">10% Complete (danger)</span>
+        </div>
+    </div> #}
+{% endmacro %}
+    {% macro geo_badge() %}
+        {% if uri_scheme=="https" %}
+            <script language="javascript" type="text/javascript" src="//smarticon.geotrust.com/si.js"></script>
+        {% endif %}
+    {% endmacro %}
+{% macro comodo_badge() %}
+    {% if uri_scheme=="https" %}
+        <a href="https://ssl.comodo.com/ev-ssl-certificates.php">
+            <img src="https://ssl.comodo.com/images/comodo_secure_100x85_white.png" alt="EV SSL Certificate" width="100"
+                 height="85" style="border: 0px;"/>
+            <br/> <span style="font-weight:bold; font-size:7pt">EV SSL Certificate</span></a><br/>
+    {% endif %}
+{% endmacro %}
+{% macro ack_tile(url,img,label) %}
+    <div class="thumbnail">
+        <a href="{{ url }}" target="_blank" data-xe-ignore>
+            <img src='{{ asset("bundles/magnetsmathgym/images/ack/#{img}") }}' style="height:150px"
+                 alt="{{ label }}">
+            <div class="caption">
+                <h3>{{ label }}</h3>
+            </div>
+        </a>
+    </div>
+{% endmacro %}
+
+{% macro rating() %}
+    <style>
+        .rating-box:nth-child(even) {
+            background-color: #ddd;
+        }
+
+        .rating-box:nth-child(odd) {
+            background-color: #eee;
+        }
+
+        .rating-wrapper {
+            float: left;
+            position: relative;
+        }
+
+        .rating-box {
+            float: left;
+            height: 15px; /* or whatever you want */
+            position: relative;
+            width: 30px; /* or whatever you want */
+            border: 1px solid #eee;
+        }
+
+        .rating-marked {
+            background-color: azure !important;
+        }
+
+        .rating-fixed {
+            background-color: lightskyblue !important;
+        }
+
+    </style>
+    <span id="rating-wrapper" class="rating-wrapper">
+        {% for i in 1..10 %}
+            <span class="rating-box" data-toggle="tooltip" title="{{ i }}"></span>
+        {% endfor %}
+    </span>
+    <script>
+        $(".rating-box").hover(function () {
+            $(".rating-box").slice(0, $(this).index() + 1).addClass('rating-marked');
+            $(".rating-box").slice($(this).index() + 1).removeClass('rating-marked');
+        });
+
+        $(".rating-box").click(function () {
+            $(".rating-box").slice(0, $(this).index() + 1).addClass('rating-fixed');
+            $(".rating-box").slice($(this).index() + 1).removeClass('rating-fixed');
+            sendRating($(this).index() + 1);
+        });
+    </script>
+{% endmacro %}
+
+{% macro sidebar(cur) %}
+    <div class="btn-group-vertical" role="group" style="position: fixed;left:-5px;top:100px;width:50px;z-index:1;">
+        <a id="sidebar_home" class="btn btn-default btn-md" href="{{ path('user') }}">
+            <span class="glyphicon glyphicon-home"></span>
+        </a>
+        <a id="sidebar_lessons" class="btn btn-default btn-md" href="{{ path('lessons') }}">
+            <span class="glyphicon glyphicon-book"></span>
+        </a>
+        <a id="sidebar_problems" class="btn btn-default btn-md" href="{{ path('problems') }}">
+            <span class="glyphicon glyphicon-question-sign"></span>
+        </a>
+        <a id="sidebar_reviews" class="btn btn-default btn-md" href="{{ path('user') }}">
+            <span class="glyphicon glyphicon-search"></span>
+        </a>
+        <a id="sidebar_stats" class="btn btn-default btn-md" href="{{ path('user') }}">
+            <span class="glyphicon glyphicon-stats"></span>
+        </a>
+        <a id="sidebar_chat" class="btn btn-default btn-md" href="{{ path('chat') }}">
+            <span class="glyphicon glyphicon-comment"></span>
+        </a>
+    </div>
+    <script>
+        $("#sidebar_{{ cur }}").removeClass('btn-default').addClass('btn-success');
+    </script>
+{% endmacro %}
+
+{% macro topnavbar() %}
+    <div class="row" style="position:fixed;top:60px;height:50px;right:10px;margin-bottom: 10px;">
+        <div class="col-sm-12">
+            <div class="btn-group pull-right" role="group">
+                <button type="button" class="btn btn-default btn-sm">
+                    <span class="glyphicon glyphicon-bell"></span><span
+                            class="label label-danger label-as-badge">42</span>
+                </button>
+                <button type="button" class="btn btn-default btn-sm">
+                    <span class="glyphicon glyphicon-comment"></span><span
+                            class="label label-info label-as-badge">2</span>
+                </button>
+                <button type="button" class="btn btn-default btn-sm">
+                    <span class="glyphicon glyphicon-pencil"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro jsEnc(ob) %}{{ ob|json_encode()|raw }}{% endmacro %}
+
+{% macro ng(x) %}{{ '{{ ' ~ x ~' }}' }}{% endmacro %}

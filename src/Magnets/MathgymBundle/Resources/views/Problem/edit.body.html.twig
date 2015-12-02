@@ -1,0 +1,175 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+
+    <div class="row">
+        <div class="col-md-4">
+            <input type="text" id="problemNameField" value="{{ problem.label }}"
+                   style="font-size:2.0em;width:90%"></input>
+        </div>
+
+        <div class="col-md-8">
+            {#<a class="close-btn btn btn-warning pull-right" data-toggle="tooltip" title="Close"><span#}
+            {#class="glyphicon glyphicon-remove"></span></a>#}
+            {#<a class="view-btn btn btn-primary pull-right" data-toggle="tooltip" title="View"><span#}
+            {#class="glyphicon glyphicon-eye-open"></span></a>#}
+            <div class="btn-toolbar" role="toolbar" aria-label="...">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-default qtype-btn" data-qtype="mcq">MCQ</button>
+                    <button type="button" class="btn btn-default qtype-btn" data-qtype="num">Numerical</button>
+                    <button type="button" class="btn btn-default qtype-btn" data-qtype="sub">Subjective</button>
+                </div>
+                <div class="btn-group" role="group" aria-label="...">
+                    <button type="button" class="btn btn-default edit-streams-btn">Edit Streams..</button>
+                    <button id="saveBtn" type="button" class="btn btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ include('MagnetsMathgymBundle:UI:texInputAdvanced.frag.html.twig',{'editMode':true,'unextendable':true}) }}
+    <script>
+        var probId = {{ problem.id|default('-1') }};
+        var defaultProb = [
+            {
+                "type": "h2",
+                "opts": {"immutable": 1, "noindex": 1},
+                "val": "Question"
+            },
+            {
+                "type": "p",
+                "opts": {"immovable": 1, "id": "q"},
+                "val": "Enter your question here"
+            },
+            {
+                "type": "h2",
+                "opts": {"immutable": 1, "noindex": 1},
+                "val": "Options"
+            },
+            {
+                "type": "p",
+                "opts": {"immovable": 1, "id": "opts"},
+                "val": "Enter your options here"
+            },
+            {
+                "type": "h2",
+                "opts": {"immutable": 1, "noindex": 1},
+                "val": "Answer"
+            },
+            {
+                "type": "p",
+                "opts": {"immovable": 1, "id": "ans"},
+                "val": "Enter your answer here"
+            },
+            {
+                "type": "h2",
+                "opts": {"immutable": 1, "noindex": 1},
+                "val": "Hint1"
+            },
+            {
+                "type": "p",
+                "opts": {"immovable": 1, "id": "h1"},
+                "val": "Enter your hint1 here"
+            },
+            {
+                "type": "h2",
+                "opts": {"immutable": 1, "noindex": 1},
+                "val": "Hint2"
+            },
+            {
+                "type": "p",
+                "opts": {"immovable": 1, "id": "h2"},
+                "val": "Enter your hint2 here"
+            },
+            {
+                "type": "h2",
+                "opts": {"immutable": 1, "noindex": 1},
+                "val": "Solution"
+            },
+            {
+                "type": "p",
+                "opts": {"immovable": 1, "id": "sol"},
+                "val": "Enter your solution here"
+            },
+        ];
+        $(function () {
+            loadAll(defaultProb);
+//            [{"type":"h2","val":"Introduction"},{"type":"p","val":"In this lesson, we will introduce the student to one of the simplest possible approaches to proving the Pythagoras Theorem. Typically, you may have encountered a similarity-based proof at higher standards in school; as well as some others.\r\nHowever, from what you will see here, it becomes evident that a much lower standard has all the tools needed to prove this result!"},{"type":"h2","val":"The tools needed"},{"type":"p","val":"Here is a list of all the results needed for this particular proof:\r\n<ol><li> The sum of the angles of a triangle is $180^{\\circ}$ .\r\n<\/li><li> The sum of the angles of a linear pair is also $180^{\\circ}$ .\r\n<\/li><li> The SAS test of congruence.\r\n<\/li><li> The area of a square whose side is $k$ is $k^2$.\r\n<\/li><li> The area of a right-angled triangle whose legs are $a,b$ is $\\frac{1}{2}ab$.\r\n<\/li><li> The algebraic identity $(a+b)^2=a^2+2ab+b^2$.\r\n<\/li><li> Also $\\LaTeX$ is <b>supported. <\/b>\r\n\r\n<\/li><\/ol>"},{"type":"ggb","val":"2193411"},{"type":"p","val":"This is a sample paragraph Edit"},{"type":"p","val":"With the above diagram as a hint, we encourage you to try and complete the proof on your own, from here!"},{"type":"p","val":"This is a sample paragraph."}]
+            $("#saveBtn").on("click", function () {
+                setLabel($("#saveBtn"), "Saving..", "info");
+                XE.postAjax("savelesson", {
+                    routeParamsOb: {"lid": lessId},
+                    postDataOb: {"lessonName": $("#lessonNameField").val(), "lessonData": data2Src()},
+
+                    successFn: function (data) {
+                        setLabel($("#saveBtn"), "Saved", "success");
+                        if (lessId < 0) {
+                            lessId = data['lid'];
+                        }
+                    },
+                    errFn: function () {
+                        setLabel($("#saveBtn"), "Error", "warning");
+                    }
+                });
+            });
+
+            function setQtype(qtype) {
+                $(".qtype-btn").removeClass("btn-primary").addClass("btn-default");
+                $(".qtype-btn[data-qtype=" + qtype + "]").removeClass("btn-default").addClass("btn-primary");
+                //change the answer and options areas, as per q type..
+                qtypes = ['mcq', 'num', 'sub'];
+                defOpts = {
+                    'mcq': '<ol>\n<li>Option1</li>\n<li>Option2</li>\n<li>Option3</li>\n<li>Option4</li>\n</ol>',
+                    'num': '..Ignore this field..',
+                    'sub': '..Ignore this field..'
+                };
+                defAns = {
+                    'mcq': '1,3',
+                    'num': '42',
+                    'sub': '..Ignore this field..'
+                };
+                if ($.inArray(qtype, qtypes) >= 0) {
+                    updateBlkById('opts', defOpts[qtype]);
+                    updateBlkById('ans', defAns[qtype]);
+                }
+            }
+
+            $(".qtype-btn").on("click", function () {
+                setQtype($(this).attr('data-qtype'));
+            });
+            setQtype('mcq');
+            $(".edit-streams-btn").on('click', function () {
+                //show modal ..
+
+            });
+//            $(".view-btn").on('click', function () {
+//                openPopup(Routing.generate('viewlesson', {'lid': l}), 'View Lesson', 'fullishMain');
+//                window.close();
+//            });
+//            $(".close-btn").on('click', function () {
+//                window.close();
+//            });
+        });
+
+    </script>
+
+{% endblock %}

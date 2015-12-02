@@ -1,0 +1,203 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::plug.html.twig' %}
+{% block plug_body %}
+    <div id="lessons-area" ngRoot="ngLessonsApp_{{ seed[0] }}" ng-controller="ngCtrl" ng-cloak>
+        <div class="row">
+            <div class="col-sm-2">
+                <table class="table table-hover">
+                    <tr class="row filter-row" data-target="home" data-noShowFilter="true"
+                        ng-class="{'btn-primary':isCurrent('home')}">
+                        <th class="bold">Lessons Home</th>
+                    </tr>
+                    <tr class="row">
+                        <th class="bold">My saved <span class="helpLink" data-helpTag="filter">filters</span></th>
+                    </tr>
+                    <tr ng-repeat="x in savedFilters" class="row filter-row" ng-click="applyFilter(x.data)">
+                        <td ng-click="applyFilter(savedFilters[$index])">{{ MX.ng('x.name') }}</td>
+                    </tr>
+                    <tr class="row filter-row" data-target="all" data-title="Browse all"
+                        ng-class="{'btn-primary':isCurrent('all')}">
+                        <td ng-click="applyFilter('all')"><a href="#">Add new/browse all..</a></td>
+                    </tr>
+                    <tr class="row">
+                        <th class="bold">General filters</th>
+                    </tr>
+                    <tr class="row filter-row" data-target="inprogress" data-title="In progress"
+                        ng-class="{'btn-primary':isCurrent('inprogress')}">
+                        <td ng-click="applyFilter('inprogress')">In progress</td>
+                    </tr>
+                    <tr class="row filter-row" data-target="completed" data-title="Completed lessons"
+                        ng-class="{'btn-primary':isCurrent('completed')}">
+                        <td ng-click="applyFilter('solved')">Completed lessons</td>
+                    </tr>
+                    <tr class="row filter-row" data-target="mine" data-title="My content"
+                        ng-class="{'btn-primary':isCurrent('mine')}">
+                        <td ng-click="applyFilter('mine')">My content</td>
+                    </tr>
+                    <tr class="row">
+                        <td><a href="{{ path('newlesson') }}">Create a new lesson..</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-sm-10">
+                <h2 id="content-panel-heading">{{ MX.ng('current_title') }}</h2>
+                {# edit save buttons.. #}
+                <hr/>
+                <div id="content-panel">
+                    <table id="list-table" class="table table-hover list-table">
+                        <tr class="row">
+                            <td class="center">
+                                Select a filter on the left
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+                    moduleId = 'ngLessonsApp_{{ seed[0] }}';
+                    var ngApp = angular.module(moduleId, []);
+                    ngApp.controller('ngCtrl', ['$scope', '$sce', function ($scope, $sce) {
+                        $scope.savedFilters = [];
+                        $scope.currentFilter = 'home';
+                        $scope.allStreams = null;
+                        $scope.table = null;
+                        $scope.curList = [];
+// Sample:                        [{"name":"Simple1","data":[{"sid":[1],"freq":1},{"sid":[2,3],"freq":1}]},{"name":"Simple2","data":[{"sid":[2],"freq":1},{"sid":[1,3],"freq":1}]}]
+
+                        $scope.setTable = function (opts) {
+                            if ($scope.table) {
+                                $scope.table.destroy();
+                            }
+                            $scope.table = $(".list-table").DataTable(opts);
+                        };
+
+                        $scope.applyFilter = function (filt) {
+                            if (filt == 'all') {
+                                filt = [{"sid": ["all"], "freq": 1}];
+                            }
+                            $(".list-table").html("<tr class='row'><td class='center'>Loading..</td></tr>");
+                            XE.postAjax('filterlessons', {
+                                postDataOb: {'fid': JSON.stringify(filt)},
+                                successFn: function (lesData) {
+                                    //superLog(lesData['lessons']['data']);
+                                    preparedData = [];
+                                    $.each(lesData['lessons']['data'], function (key, val) {
+                                        lesLink = "<a class='lesson-link' data-lesId='" + val[0] + "'>" + val[1] + "</a>";
+                                        if (val[4]["status"] == "0") {
+                                            lesStat = "<span class='not-started'>Not started</span>";
+                                        } else if (val[4]["status"] == "1") {
+                                            lesStat = "<span class='in-progress'>In progress</span>";
+                                        } else {
+                                            lesStat = "<span class='submitted'>Solved</span>";
+                                        }
+                                        preparedData.push([val[0], lesLink, val[2], "", lesStat]);
+                                    });
+
+                                    $scope.table = $(".list-table").DataTable({
+                                        destroy: true,
+                                        data: preparedData,
+                                        columns: lesData['lessons']['columns'],
+                                    });
+                                    $scope.table.on('draw', function () {
+                                        $scope.rebind();
+                                    });
+                                    $scope.rebind();
+                                }
+                            });
+                        };
+                        $scope.rebind = function () {
+//                            $(".list-table tbody tr").on('click', function () {
+//                                openPopup(Routing.generate('viewlesson', {'lid': $(this).find(".lesson-link").attr('data-lesId')}), 'View Lesson', 'fullishMain');
+//                            })
+                            $(".list-table tbody tr").attr('title', 'This is a lesson');
+                            rebindTooltips($(".list-table tbody tr"), {
+                                content: {
+                                    text: function (event, api) {
+                                        var lessonId = api.elements.target.find(".lesson-link").attr('data-lesId');
+                                        $.ajax({
+                                                    url: Routing.generate('peeklesson', {
+                                                        'lid': lessonId
+                                                    }),
+                                                })
+                                                .then(function (data) {
+                                                    // Set the tooltip content upon successful retrieval
+                                                    api.set('content.text', JSON.parse(data.content)['body']);
+                                                    //set view, edit binds..
+                                                    api.elements.content.find(".read-btn").on('click', function () {
+                                                        openPopup(Routing.generate('viewlesson', {'lid': lessonId}), 'View Lesson', 'fullishMain');
+                                                    });
+                                                    api.elements.content.find(".edit-btn").on('click', function () {
+                                                        openPopup(Routing.generate('editlesson', {'lid': lessonId}), 'Edit Lesson', 'fullishMain');
+                                                    });
+                                                }, function (xhr, status, error) {
+                                                    // Upon failure... set the tooltip content to error
+                                                    api.set('content.text', status + ': ' + error);
+                                                });
+                                        return '.......Loading.......'; // Set some initial text
+                                    },
+                                    title: {
+                                        text: 'Preview',
+                                        button: 'Close' // Close button
+                                    },
+                                },
+                                show: 'click',
+                                hide: 'unfocus',
+                                position: {
+                                    target: 'mouse',
+                                    viewport: $(window),
+                                    adjust: {
+                                        mouse: false,
+                                        method: 'flip flip'
+                                    }
+                                }
+                            });
+
+                            MathJax.Hub.Queue(["Typeset", MathJax.Hub, 'list-table']);
+                        };
+                        $scope.createHandler = function () {
+                            $scope.currentFilter = 'home';
+                            $scope.savedFilters = JSON.parse('{{ app.user.lfilters|json_encode|e('js')  }}');
+                            $scope.allStreams = JSON.parse('{{ streams|json_encode|e('js') }}');
+                        };
+
+                        $scope.destroyHandler = function () {
+
+                        };
+                        $scope.createHandler();
+
+                        $scope.isCurrent = function (fName) {
+                            return ($scope.currentFilter == fName);
+                        }
+                    }
+                    ]);
+                }()
+        )
+        ;
+    </script>
+    <style>
+        .filter-row, .list-table tbody tr {
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}

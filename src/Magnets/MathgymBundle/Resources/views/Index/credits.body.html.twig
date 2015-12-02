@@ -1,0 +1,123 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+    <h2>Acknowledgments</h2>
+    This project has been built using a number of free and open-source web technologies. Our sincere thanks to all of them!
+    <br/>
+    We can only return the favour by inviting you to <a href="https://github.com/sohaniacademy/mathstreams" target="_blank">fork
+        us on GitHub</a>!<br/><br/>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="text-center">Server stack</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-sm-3 text-center">{{ MX.ack_tile('http://linuxfoundation.org','linux.jpg','Linux') }}</div>
+                <div class="col-sm-3 text-center">{{ MX.ack_tile('http://httpd.apache.org','apache.jpg','Apache') }}</div>
+                <div class="col-sm-3 text-center">{{ MX.ack_tile('http://mysql.com','mysql.jpg','MySQL') }}</div>
+                <div class="col-sm-3 text-center">{{ MX.ack_tile('http://php.net','php.jpg','PHP') }}</div>
+            </div>
+            <div class="row credits-row">
+                <div class="col-sm-6 text-center">{{ MX.ack_tile('http://centos.org','centos.jpg','CentOS') }}</div>
+                <div class="col-sm-6 text-center">{{ MX.ack_tile('http://fedoraproject.org/wiki/EPEL','epel.jpg','EPEL') }}</div>
+            </div>
+        </div>
+        <div class="panel-heading">
+            <h3 class="text-center">Framework components</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row credits-row">
+                <div class="col-sm-3 text-center">{{ MX.ack_tile('http://doctrine-project.org','doctrine.jpg','Doctrine') }}</div>
+                <div class="col-sm-6 text-center">{{ MX.ack_tile('http://symfony.com','symfony.jpg','Symfony') }}</div>
+                <div class="col-sm-3 text-center">{{ MX.ack_tile('http://twig.sensiolabs.org','twig.jpg','Twig') }}</div>
+            </div>
+        </div>
+        <div class="panel-heading">
+            <h3 class="text-center">UI components</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-sm-4 text-center">{{ MX.ack_tile('http://mathjax.org','mathjax.jpg','MathJax') }}</div>
+                <div class="col-sm-4 text-center">{{ MX.ack_tile('http://getbootstrap.com','bootstrap.jpg','Bootstrap') }}</div>
+                <div class="col-sm-4 text-center">{{ MX.ack_tile('http://angularjs.org','bootstrap.jpg','AngularJS') }}</div>
+            </div>
+            <div class="row credits-row">
+                <div class="col-sm-4 text-center">{{ MX.ack_tile('http://jquery.com','jquery.jpg','jQuery') }}</div>
+                <div class="col-sm-4 text-center">{{ MX.ack_tile('http://jqueryui.com','jqueryui.jpg','jQuery UI') }}</div>
+
+            </div>
+        </div>
+        <div class="panel-heading">
+            <h3 class="text-center">Project management tools</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row credits-row">
+                <div class="col-sm-6 text-center">{{ MX.ack_tile('http://getcomposer.org','composer.jpg','Composer') }}</div>
+                <div class="col-sm-6 text-center">{{ MX.ack_tile('http://git-scm.org','git.jpg','Git') }}</div>
+            </div>
+        </div>
+        <div class="panel-heading">
+            <h3 class="text-center">Other third-party libraries</h3>
+        </div>
+        <ul class="list-group">
+            <li class="list-group-item"><a href="https://github.com/excelwebzone/EWZRecaptchaBundle">Recaptcha bundle</a>
+            </li>
+            <li class="list-group-item"><a href="https://github.com/FriendsOfSymfony/FOSJsRoutingBundle">JS routing
+                    bundle</a></li>
+            <li class="list-group-item"><a href="http://htmlpurifier.org/">HTML Purifier</a></li>
+            <li class="list-group-item"><a href="https://developers.google.com/speed/pagespeed/module/">Pagespeed module</a>
+            </li>
+        </ul>
+    </div>
+    <style>
+        .panel-heading {
+            cursor: pointer;
+        }
+
+        .panel-heading:hover {
+            text-decoration: underline;
+        }
+
+        .thumbnail {
+
+            transition: box-shadow .5s ease-out !important;
+            -moz-transition: box-shadow .5s ease-out !important;
+            -webkit-transition: box-shadow .5s ease-out !important;
+        }
+
+        .thumbnail:hover {
+            box-shadow: 3px 3px 10px black;
+        }
+
+        .credits-row {
+            margin-bottom: 20px;
+        }
+
+    </style>
+    <script>
+        $(function () {
+            $(".panel-heading").on('click', function () {
+                $(this).next().slideToggle();
+            });
+        });
+    </script>
+{% endblock %}

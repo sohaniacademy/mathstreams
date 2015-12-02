@@ -1,0 +1,551 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::plug.html.twig' %}
+{% block plug_body %}
+    <div id="content-area" ngRoot="ngContentApp_{{ seed[0] }}" ng-controller="ngCtrl" ng-cloak>
+        <div class="row">
+            <div class="col-sm-2">
+                <table class="table table-hover">
+                    <tr class="row filter-row" data-target="home" data-noShowFilter="true"
+                        ng-class="{'btn-primary':isCurrent('home')}">
+                        {% if contentType == 'problems' %}
+                            <th class="bold" ng-click="applyFilter('home')">Problems Home</th>
+                        {% elseif contentType == 'lessons' %}
+                            <th class="bold" ng-click="applyFilter('home')">Lessons Home</th>
+                        {% endif %}
+                    </tr>
+                    <tr class="row th-row">
+                        <th class="bold helpNode" data-helpLink="savedFilters" data-helpTitle="Saved filters">My saved
+                            filters
+                        </th>
+                        <template class="helpText" data-helpText="savedFilters">
+                            Your saved filters allow you to quickly use them in the future.<br/>
+                            You can edit these, create your own and save them.<br/>
+                            <a href="#">Learn more about filters</a>
+                        </template>
+                    </tr>
+                    <tr ng-repeat="x in savedFilters" class="row filter-row"
+                        ng-class="{'btn-primary':isCurrent('saved_'+$index)}">
+                        <td ng-click="applyFilter('saved_'+$index)">{{ MX.ng('($index+1)') }}
+                            : {{ MX.ng('x.name') }}</td>
+                    </tr>
+                    <tr class="row filter-row" data-target="all" data-title="Browse all"
+                        ng-class="{'btn-primary':isCurrent('all')}">
+                        <td ng-click="applyFilter('all');toggleEditMode(true)"><a href="#">New filter/Browse all..</a>
+                        </td>
+                    </tr>
+                    <tr class="row th-row">
+                        <th class="bold helpNode" data-helpLink="generalFilters" data-helpTitle="General filters">
+                            General filters
+                        </th>
+                        <template class="helpText" data-helpText="generalFilters">
+                            These are special filters, which will always be available.<br/>
+                            <a href="#">Learn more about filters</a>
+                        </template>
+                    </tr>
+                    <tr class="row filter-row"
+                        ng-class="{'btn-primary':isCurrent('inprogress')}">
+                        <td ng-click="applyFilter('inprogress')">In progress</td>
+                    </tr>
+                    <tr class="row filter-row"
+                        ng-class="{'btn-primary':isCurrent('completed')}">
+                        <td ng-click="applyFilter('solved')">Completed</td>
+                    </tr>
+                    <tr class="row filter-row" data-target="mine" data-title="My content"
+                        ng-class="{'btn-primary':isCurrent('mine')}">
+                        <td ng-click="applyFilter('mine')">My content</td>
+                    </tr>
+                    <tr class="row">
+                        {% if contentType == 'problems' %}
+                            <td><a href="{{ path('newproblem') }}">Create a new problem..</a></td>
+                        {% elseif contentType == 'lessons' %}
+                            <td><a href="{{ path('newlesson') }}">Create a new lesson..</a></td>
+                        {% endif %}
+                    </tr>
+                </table>
+            </div>
+            <div class="col-sm-10">
+                <h2 id="content-panel-heading" ng-bind-html="currentFilter['title']"></h2>
+                <span ng-if="isEditable()">
+                    <span class="btn btn-xs btn-primary">
+                            <span class="glyphicon glyphicon-pencil edit-filt-btn" data-toggle="tooltip"
+                                  ng-click="toggleEditMode()" title="Edit Filter"></span> </span>
+                    <span ng-if="editMode" class="btn btn-xs btn-warning">
+                            <span class="glyphicon glyphicon-save save-filt-btn" data-toggle="tooltip"
+                                  ng-click="saveFilt()" title="Save Filter"></span> </span>
+                    <div ng-if="editMode" class="mono-font edit-filt-area" ng-class="{editMode:editMode}">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    {#<span ng-bind-html="currentCrumbs"></span>#}
+                                    <table class="table table-hover">
+                                        <tr class="row crumbs-row th-row">
+                                            <th>Filter components</th>
+                                            <th class="center" style="width:50px;">Freq</th>
+                                        </tr>
+                                        <tr ng-repeat="c in currentFilter['data']" class="row crumbs-row"
+                                            ng-class="{'selected':isSelComp($index),'unselected':!isSelComp($index)}"
+                                            ng-click="selComp($index)">
+                                            <td>
+                                                <span ng-repeat="s in c['sid']">
+                                                    <span class="badge"
+                                                          ng-class="strCatClass[allStreamsById[s]['cat']]"
+                                                          ng-click="toggleStr(s)">
+                                                        {{ MX.ng("allStreamsById[s]['name']") }}</span>
+                                                </span>
+                                            </td>
+                                            <td class="center" style="vertical-align: middle;">
+                                                <a ng-if="isSelComp($index)" class="glyphicon glyphicon-triangle-left"
+                                                   style="font-size:0.9em;" ng-click="subCompWt($index)" href="#"></a>
+                                                {{ MX.ng("c['freq']") }}
+                                                <a ng-if="isSelComp($index)" class="glyphicon glyphicon-triangle-right"
+                                                   style="font-size:0.9em;" ng-click="addCompWt($index)" href="#"></a>
+                                            </td>
+                                        </tr>
+                                        <tr class="row crumbs-row">
+                                            <td colspan="2">
+                                                <span ng-click="addComp()"><a href="#">Add component..</a></span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-sm-8">
+                                    <div class="row">
+                                        <input type="text" class="form-control str-search" placeholder="Search"
+                                               style="height:100%;padding:0px 14px;" ng-model="strSearch.str">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-1">Std:</div>
+                                        <div class="col-sm-11">
+                                            <span ng-repeat="s in allStreams['std']">
+                                                <span class="alert-danger badge" ng-click="toggleStr(s['id'])"
+                                                      ng-class="{'unselected':!isSelStr(s['id']),'invis':!isSearchMatch(s['name'])}">{{ MX.ng("s['name']") }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-1">Topic:</div>
+                                        <div class="col-sm-11">
+                                            <span ng-repeat="s in allStreams['topic']">
+                                                <span class="alert-success badge" ng-click="toggleStr(s['id'])"
+                                                      ng-class="{'unselected':!isSelStr(s['id']),'invis':!isSearchMatch(s['name'])}">{{ MX.ng("s['name']") }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-1">Difficulty:</div>
+                                        <div class="col-sm-11">
+                                            <span ng-repeat="s in allStreams['diff']">
+                                                <span class="alert-info badge"
+                                                      ng-click="toggleStr(s['id'])"
+                                                      ng-class="{'unselected':!isSelStr(s['id']),'invis':!isSearchMatch(s['name'])}">{{ MX.ng("s['name']") }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-1">Other:</div>
+                                        <div class="col-sm-11">
+                                            <span ng-repeat="s in allStreams['other']">
+                                                <span class="alert-warning badge"
+                                                      ng-click="toggleStr(s['id'])"
+                                                      ng-class="{'unselected':!isSelStr(s['id']),'invis':!isSearchMatch(s['name'])}">{{ MX.ng("s['name']") }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </span>
+                <hr/>
+                <div ng-if="curData['all'].length>0" id="summary-panel">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-warning progress-bar-striped"
+                             ng-style="{'width':((100.0*curData['inprogress'].length)/curData['all'].length) +'%'}">
+                        </div>
+                        <div class="progress-bar progress-bar-danger"
+                             ng-style="{'width':((100.0*curData['new'].length)/curData['all'].length) +'%'}">
+                        </div>
+                        <div class="progress-bar progress-bar-success"
+                             ng-style="{'width':((100.0*curData['solved'].length)/curData['all'].length) +'%'}">
+                        </div>
+                    </div>
+                    Filter results:<br/>
+                    {{ MX.ng('curData["all"].length') }} problems<br/>
+                    {{ MX.ng('curData["new"].length') }} new<br/>
+                    {{ MX.ng('curData["inprogress"].length') }} in progress<br/>
+                    {{ MX.ng('curData["solved"].length') }} solved<br/>
+                    <a href="#">Load details..</a>
+                </div>
+                <div ng-if="curData['all'].length<=0">
+                    No results to show
+                </div>
+                <div id="content-panel">
+                    <table id="list-table" class="table table-hover list-table">
+                        {#<tr class="row">#}
+                        {#<td class="center">#}
+                        {#Select a filter on the left#}
+                        {#</td>#}
+                        {#</tr>#}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+                    moduleId = 'ngContentApp_{{ seed[0] }}';
+                    var ngApp = angular.module(moduleId, []);
+                    ngApp.controller('ngCtrl', ['$scope', '$sce', '$window', function ($scope, $sce, $window) {
+                        $scope.strSearch = {'str': ''};
+
+                        $scope.allStreams = null;
+                        $scope.savedFilters = null;
+
+                        $scope.currentFilter = null;//{"name":"somename","title":"someTitle",strid:"saved_2","data":[{"sid":[1],freq[1]},...]}
+                        //$scope.currentTitle = '';
+                        $scope.curData = {};
+
+                        $scope.table = null;
+
+                        $scope.editMode = false;
+                        $scope.curComp = 0;
+                        //$scope.currentCrumbs = [];
+                        //$scope.compWt = [];
+
+                        $scope.safeApply = function (fn) {
+                            var phase = this.$root.$$phase;
+                            if (phase == '$apply' || phase == '$digest') {
+                                if (fn && (typeof(fn) === 'function')) {
+                                    fn();
+                                }
+                            } else {
+                                this.$apply(fn);
+                            }
+                        };
+
+                        $scope.isEditable = function () {
+                            //only saved filters can be edited..
+                            if ($scope.currentFilter == null) return false;
+                            return (/saved_[0-9]+/).test($scope.currentFilter['strid']) || ($scope.currentFilter['strid'] == 'all');
+                        };
+                        $scope.isSelComp = function (idx) {
+                            return ($scope.curComp == idx);
+                        };
+                        $scope.selComp = function (idx) {
+                            $scope.curComp = idx;
+                        };
+                        $scope.addComp = function () {
+                            $scope.currentFilter['data'].push({'sid': [], 'freq': 1});
+                            $scope.selComp($scope.currentFilter['data'].length - 1);
+                        };
+
+                        $scope.addCompWt = function (idx) {
+                            $scope.currentFilter['data'][idx]['freq'] = Math.min(9, $scope.currentFilter['data'][idx]['freq'] + 1);
+                        };
+
+                        $scope.subCompWt = function (idx) {
+                            $scope.currentFilter['data'][idx]['freq'] = Math.max(0, $scope.currentFilter['data'][idx]['freq'] - 1);
+                        };
+
+                        $scope.isCurrent = function (fName) {
+                            if ($scope.currentFilter == null) return false;
+                            return ($scope.currentFilter['strid'] == fName);
+                        }
+
+                        $scope.isSelStr = function (sid) {
+                            return ($.inArray(sid, $scope.currentFilter['data'][$scope.curComp]['sid']) >= 0);
+                        };
+
+                        $scope.isSearchMatch = function (sname) {
+                            if ((/^\s*$/).test($scope.strSearch.str)) return true;
+                            if (sname.toLowerCase().search($scope.strSearch.str.toLowerCase()) >= 0) return true;
+                            return false;
+                        }
+
+                        $scope.toggleStr = function (sid) {
+                            if ($scope.isSelStr(sid)) {
+                                idx = $scope.currentFilter['data'][$scope.curComp]['sid'].indexOf(sid);
+                                $scope.currentFilter['data'][$scope.curComp]['sid'].splice(idx, 1);
+                                //remove from array..
+                            } else {
+                                //add to array..
+                                //but we may try to conserve order..
+                                $scope.currentFilter['data'][$scope.curComp]['sid'].push(sid);
+                            }
+                        };
+
+                        $scope.setTable = function (opts) {
+                            if ($scope.table) {
+                                $scope.table.destroy();
+                            }
+                            $scope.table = $(".list-table").DataTable(opts);
+                        };
+
+                        $scope.applyFilter = function (filtStr, callbackFn) {
+                            callbackFn = (typeof callbackFn === 'undefined') ? nulFn : callbackFn;
+                            fullCallbackFn = function (data) {
+                                $scope.currentFilter = data['filtOb'];
+                                //this is a hack..
+                                $scope.currentFilter['title'] = $sce.trustAsHtml($scope.currentFilter['title']);
+                                $scope.curData = data['data'];
+                                callbackFn();
+                                $scope.safeApply();
+                                setLoading($("#content-panel"), "end", null);
+                            };
+                            setLoading($("#content-panel"), "start", "15%");
+                            {% if contentType == 'problems' %}
+                            SC.safeFun(SC.getFiltered, filtStr, 'p', fullCallbackFn);
+                            {% elseif contentType == 'lessons' %}
+                            SC.safeFun(SC.getFiltered, filtStr, 'l', fullCallbackFn);
+                            {% endif %}
+                        };
+
+                        $scope.applyFilter2 = function (filtStr) {
+                            //todo .. maybe need to fwkf this
+                            if (filtStr == 'all') {
+                                filtOb = {
+                                    "name": "All",
+                                    "title": $sce.trustAsHtml("Browse all"),
+                                    "strid": "all",
+                                    "data": [{"sid": [], "freq": 1}]
+                                };
+                            } else if (filtStr == 'home') {
+                                filtOb = {
+                                    "name": "Home", "title": $sce.trustAsHtml("Home"), "strid": "home",
+                                    "data": [{"sid": ["inprogress"], "freq": 1}, {"sid": ["new"], "freq": 1}]
+                                };
+                            } else if (filtStr == 'mine') {
+                                filtOb = {
+                                    "name": "Mine", "title": $sce.trustAsHtml("Mine"), "strid": "mine",
+                                    "data": [{"sid": ["mine"], "freq": 1}]
+                                };
+                            } else if (filtStr == 'inprogress') {
+                                filtOb = {
+                                    "name": "In progress",
+                                    "title": $sce.trustAsHtml("In progress"),
+                                    "strid": "inprogress",
+                                    "data": [{"sid": ["inprogress"], "freq": 1}]
+                                };
+                            } else if (filtStr == 'solved') {
+                                filtOb = {
+                                    "name": "Solved", "title": $sce.trustAsHtml("Solved"), "strid": "solved",
+                                    "data": [{"sid": ["solved"], "freq": 1}]
+                                };
+                            } else if ((/saved_[0-9]+/).test(filtStr)) {
+                                oldFiltOb = $scope.savedFilters[filtStr.match(/[0-9]+/)[0]];
+                                filtOb = {
+                                    "name": "Saved",
+                                    "title": $sce.trustAsHtml('<small>Filter: </small>' + oldFiltOb["name"]),
+                                    "strid": "saved_" + filtStr.match(/[0-9]+/)[0],
+                                    "data": oldFiltOb["data"]
+                                };
+                            }
+                            setLoading($("#content-panel"), "start", "15%");
+
+                            {% if contentType == 'problems' %}
+                            {% set filterPath='filterproblems' %}
+                            {% elseif contentType == 'lessons' %}
+                            {% set filterPath='filterlessons' %}
+                            {% endif %}
+                            XE.postAjax('{{ filterPath }}', {
+
+                                postDataOb: {'fid': JSON.stringify(filtOb["data"])},
+                                successFn: function (data) {
+                                    //superLog(lesData['lessons']['data']);
+                                    preparedData = [];
+                                    $.each(data['contents'], function (key, val) {
+                                        contentLink = "<a class='content-link' data-contentId='" + val['id'] + "'>" + val['label'] + "</a>";
+                                        if (val['status']['status'] == "0") {
+                                            contentStat = "<span class='not-started'>Not started</span>";
+                                        } else if (val['status']["status"] == "1") {
+                                            contentStat = "<span class='in-progress'>In progress</span>";
+                                        } else {
+                                            contentStat = "<span class='submitted'>Solved</span>";
+                                        }
+
+                                        streamsOb = {'std': '', 'topic': '', 'diff': '', 'other': ''};
+                                        $.each(val['streams'], function (ikey, ival) {
+                                            if ($.inArray(ival['cat'], ['std', 'topic', 'diff', 'other']) < 0) {
+                                                ival['cat'] = 'other';
+                                            }
+                                            strClass = $scope.strCatClass[ival['cat']];
+                                            streamsOb[ival['cat']] += "<span class='badge " + strClass + "'>" + ival['name'] + "</span>&nbsp;";
+                                        });
+                                        streamsStr = streamsOb['std'] + streamsOb['topic'] + streamsOb['diff'] + streamsOb['other'];
+                                        authLink = "<a class='user-link' data-contentId='" + val['author']['id'] + "'>" + val['author']['name'] + "</a>";
+                                        preparedData.push([val['id'], contentLink, contentStat, streamsStr, val['created'], authLink]);
+                                    });
+                                    setLoading($("#content-panel"), "end", null);
+                                    $scope.table = $(".list-table").DataTable({
+                                        destroy: true,
+                                        data: preparedData,
+                                        columns: [{"title": "ID", "width": "40px"},
+                                            {"title": "Label", "width": "30%"},
+                                            {"title": "Status", "width": "100px"},
+                                            {"title": "Streams"},//, width: "20%"},
+                                            {"title": "Created", width: "10%"},
+                                            {"title": "Author", width: "10%"}],
+                                        "order": [[2, "asc"], [4, "desc"]]
+                                    });
+                                    $scope.table.on('draw', function () {
+                                        $scope.rebind();
+                                    });
+                                    $scope.rebind();
+                                    //superLog(filtStr);
+                                    //$scope.currentTitle = $sce.trustAsHtml(filtTitle);
+                                    $scope.currentFilter = filtOb;
+                                    //$scope.setCrumbs(filtOb["data"]);
+                                    $scope.$apply();
+                                }
+                            });
+                        };
+
+                        $scope.toggleEditMode = function (newVal) {
+                            //superLog('toggling'+($scope.editMode)+" and "+newVal);
+                            if (typeof newVal === 'undefined')
+                                newVal = !($scope.editMode);
+                            $scope.editMode = newVal;
+                            //superLog('toggling'+($scope.editMode)+" and "+newVal);
+                        };
+
+                        $scope.$watch('currentCrumbs', function () {
+                            rebindTooltips();
+                        });
+                        $scope.rebind = function () {
+
+                            $(".list-table tbody tr").on('click', function () {
+                                //openPopup(Routing.generate('viewlesson', {'lid': $(this).find(".content-link").attr('data-contentId')}), 'View Problem');//, 'fullishMain');
+                                //openModal();
+                                {% if contentType == 'problems' %}
+                                {% set peekPath='peekproblem' %}
+                                {% elseif contentType == 'lessons' %}
+                                {% set peekPath='peeklesson' %}
+                                {% endif %}
+                                setModal("Loading..");
+                                XE.postAjax('{{ peekPath }}', {
+                                    routeParamsOb: {'pid': $(this).find(".content-link").attr('data-contentId')},
+                                    successFn: function (data) {
+                                        setModal(data['body']);
+                                    },
+                                    errFn: function (data) {
+                                        //todo: handle error..
+                                    }
+                                });
+                            });
+                            MathJax.Hub.Queue(["Typeset", MathJax.Hub, 'list-table']);
+                        };
+
+                        $scope.createHandler = function () {
+                            $scope.editMode = false;
+                            $scope.applyFilter('home', function () {
+                                $scope.allStreams = SC.allStreams;
+                                {% if contentType == 'problems' %}
+                                $scope.savedFilters = SC.savedFilters['p'];
+                                {% elseif contentType == 'lessons' %}
+                                $scope.savedFilters = SC.savedFilters['l'];
+                                {% endif %}
+                            });
+                        };
+
+                        $scope.destroyHandler = function () {
+                        };
+                        $scope.createHandler();//document.getElementById('msg').innerHTML = 'Hello';
+                    }
+                    ]);
+                }()
+        )
+        ;
+    </script>
+    <style>
+        .filter-row, .list-table tbody tr {
+            cursor: pointer;
+        }
+
+        .list-table th:hover {
+            background: #eeeeee;
+        }
+
+        .filter-row.btn-primary, .filter-row.btn-primary a {
+            color: white !important;
+            font-weight: bold !important;
+        }
+
+        .crumbs-row, .crumbs-row td, .crumbs-row th {
+            padding: 0px !important;
+        }
+
+        .crumbs-row.selected {
+            background-color: white;
+        }
+
+        .edit-filt-area:hover {
+            background: #dddddd;
+        }
+
+        .edit-filt-area.editMode {
+            background: #eeeeee;
+        }
+
+        .badge {
+            box-shadow: 0px 0px 2px black;
+            font-family: 'Ubuntu Mono', monospace;
+            font-size: 1.1em !important;
+            padding: 0px 5px !important;
+            cursor: pointer;
+        }
+
+        .badge.alert-danger {
+            /*color: white;*/
+            /*background-color: maroon;*/
+        }
+
+        .badge.alert-success {
+            /*color: white;*/
+            /*background-color: green;*/
+        }
+
+        .badge.alert-info {
+            /*color: white;*/
+            /*background-color: darkblue;*/
+        }
+
+        .badge.alert-warning {
+            /*color: white;*/
+            /*background-color: orange;*/
+        }
+
+        .badge.unselected {
+            color: black;
+            background-color: #bbbbbb;
+            font-weight: normal;
+        }
+
+        .crumbs-row.unselected .badge {
+            background-color: #a8a8a8;
+        }
+
+        .invis {
+            float: right;
+            background-color: #ddd !important;
+            color: #eee !important;
+        }
+    </style>
+{% endblock %}

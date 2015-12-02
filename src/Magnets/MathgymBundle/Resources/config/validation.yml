@@ -1,0 +1,35 @@
+#  This file is part of Mathstreams.
+#
+#  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+#
+#  Mathstreams is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Magnets\MathgymBundle\Entity\User:
+    properties:
+        fullname:
+            - NotBlank: ~
+            - Length:
+                max: 255
+                maxMessage: "Full name cannot be longer than {{ limit }} characters"
+            - Regex:
+                pattern: '/^[a-zA-Z0-9\s]+$/'
+                message: "Only alphanumeric characters allowed"            
+        email:
+            - NotBlank: ~
+            - Email: ~
+        password:
+            - NotBlank: ~
+            - Length:
+                min: 7
+                minMessage: "Password must be at least {{ limit }} characters long"

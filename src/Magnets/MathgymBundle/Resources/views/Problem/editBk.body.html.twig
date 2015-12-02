@@ -1,0 +1,290 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{# Problem data.. #}
+{% set pid=problem.id|default('-1') %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <a href="{{ path('problems') }}">&laquo; Back to home</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-default" id='problem'>
+                <div class="panel-heading">
+                    <h3>
+                        <small>Label:</small>
+                        <span id='label'></span></h3>
+                </div>
+                <div class="panel-body tex-render">
+                    <b>Question: </b><span id='question'></span><br/>
+                    <b>Hint 1: </b><span id='hint1'></span><br/>
+                    <b>Hint 2: </b><span id='hint2'></span><br/>
+                    <b>Solution: </b><span id='solution'></span><br/>
+                    <b>Answer: </b><span id='answer'></span><br/>
+                    <b>Options: </b><span id='options'></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div id="toolbar" class="btn-toolbar">
+                Edit:
+                <div id="editFieldButs" class="btn-group" data-toggle="buttons">
+                    <label class="btn btn-default active">
+                        <input type="radio" id="editL" name="editField" value="label" checked>Label</input>
+                    </label>
+                    <label class="btn btn-default">
+                        <input type="radio" id="editQ" name="editField" value="question">Q</input>
+                    </label>
+                    <label class="btn btn-default">
+                        <input type="radio" id="editH1" name="editField" value="hint1">H1</input>
+                    </label>
+
+                    <input type="radio" id="editQ" name="editField" value="question"><label
+                            for="editQ">Q</label></input>
+                    <input type="radio" id="editH1" name="editField" value="hint1"><label
+                            for="editH1">H1</label></input>
+                    <input type="radio" id="editH2" name="editField" value="hint2"><label
+                            for="editH2">H2</label></input>
+                    <input type="radio" id="editS" name="editField" value="solution"><label
+                            for="editS">Sol</label></input>
+                    <input type="radio" id="editA" name="editField" value="answer"><label
+                            for="editA">Ans</label></input>
+                    <input type="radio" id="editO" name="editField" value="options"><label
+                            for="editO">Opts</label></input>
+                </div>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                Q type:
+                <span id="qtypeButs">
+                    <input type="radio" id="flagS" name="flagField" value="sub" checked="checked"/><label for="flagS">Sub</label>
+                    <input type="radio" id="flagN" name="flagField" value="num"><label for="flagN"/>Num</label>
+                    <input type="radio" id="flagM" name="flagField" value="mcq"><label for="flagM"/>MCQ</label>
+                </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="#" id="edit-streams" class='btn-sm btn-info' data-toggle='modal' data-target='#streams-popup'>Edit
+                    streams</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <button id="save-draft" class='btn-sm btn-default'>Save</button>
+            </div>
+        </div>
+    </div>
+    {{ include('MagnetsMathgymBundle:UI:texInput.frag.html.twig') }}
+
+    <div id="streams-popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modal area"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="panel panel-default">
+                    <div class="hint-title panel-heading"><h4>Edit streams</h4></div>
+                    <div class="hint-body">
+                        <br/><b>Standard:</b><br/>
+                        {% for stream in streamCats['std'] %}
+                            <button class="stream-but btn btn-xs btn-default" data-targetid="{{ stream.id }}"
+                                    data-mem="0">{{ stream.name }}</button>&nbsp;
+                        {% endfor %}
+                        <br/><b>Topic:</b><br/>
+                        {% for stream in streamCats['topic'] %}
+                            <button class="stream-but btn btn-xs btn-default" data-targetid="{{ stream.id }}"
+                                    data-mem="0">{{ stream.name }}</button>&nbsp;
+                        {% endfor %}
+                        <br/><b>Difficulty:</b><br/>
+                        {% for stream in streamCats['diff'] %}
+                            <button class="stream-but btn btn-xs btn-default" data-targetid="{{ stream.id }}"
+                                    data-mem="0">{{ stream.name }}</button>&nbsp;
+                        {% endfor %}
+                        <br/><b>Other tags:</b><br/>
+                        {% for stream in streamCats['other'] %}
+                            <button class="stream-but btn btn-xs btn-default" data-targetid="{{ stream.id }}"
+                                    data-mem="0">{{ stream.name }}</button>&nbsp;
+                        {% endfor %}
+                        <hr/>
+                        <button class="btn btn-success" id="stream-apply-but">Apply</button>
+                        {#                $('#popup').on('show.bs.modal', function (event) { #}
+                        <script>
+                            fids = [];
+
+                            function addMem(sid) {
+                                setClass($('button[data-targetid=' + sid + ']'), 'primary');
+                                $('button[data-targetid=' + sid + ']').data('mem', '1');
+                                fids.push(sid);
+                            }
+
+                            function delMem(sid) {
+                                setClass($('button[data-targetid=' + sid + ']'), 'default');
+                                $('button[data-targetid=' + sid + ']').data('mem', '0');
+                                idx = fids.indexOf(sid);
+                                if (idx > -1) {
+                                    fids.splice(idx, 1);
+                                }
+                            }
+
+                            $(function () {
+                                {% for mem in mems %}
+                                addMem({{ mem }}, fids);
+                                {% endfor %}
+                                $('.stream-but').on('click', function () {
+                                    if ($(this).data('mem') == '1') {
+                                        delMem($(this).data('targetid'));
+                                    } else {
+                                        addMem($(this).data('targetid'));
+                                    }
+                                });
+                                $('#stream-apply-but').on('click', function () {
+                                    //save string locally, will post it along with other data..
+
+                                    postAjax('setfilters', {pid: {{ problem.id }}}, {fid: fids.join('&')}, function () {
+                                        $('#streams-popup').modal('hide');
+                                    }, nulFn);
+                                    fids.join('&');
+                                });
+                            });</script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var allFields = ["label", "question", "hint1", "hint2", "solution", "qtype", "answer", "options", "std", "diff"];
+        var curField;
+        var fieldVals = {};
+        var streamId, probId;
+        function loadField(field) {
+            if (allFields.indexOf(field) >= 0) {
+                //alert(decodeHTML(fieldVals[field]));
+                setTexCode(decodeHTML(fieldVals[field]));
+            }
+        }
+
+        function storeField(field) {
+            if (allFields.indexOf(field) >= 0) {
+                fieldVals[field] = getTexCode();
+                $("#" + field).html(transViewAdv(fieldVals[field]));
+            }
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, "#problem"]);
+        }
+
+        function switchField(newField) {
+            storeField(curField);
+            curField = newField;
+            loadField(curField)
+        }
+
+        $(function () {
+            //setup init values..
+            fieldVals["label"] = '{{ problem.label|e('js') }}';
+            fieldVals["question"] = '{{ problem.question|e('js') }}';
+            fieldVals["hint1"] = '{{ problem.hint1|e('js') }}';
+            fieldVals["hint2"] = '{{ problem.hint2|e('js') }}';
+            fieldVals["solution"] = '{{ problem.solution|e('js') }}';
+            fieldVals["qtype"] = '{{ problem.qtype|e('js') }}';
+            fieldVals["answer"] = '{{ problem.answer|e('js') }}';
+            fieldVals["options"] = '{{ problem.options|e('js') }}';
+            fieldVals["flags"] = '1';
+            fieldVals["std"] = '1';
+            allFields.forEach(function (field) {
+                //fieldVals[field] = $("#val-" + field).html();
+                //fieldVals[field] = decodeHTML(fieldVals[field]);
+                $("#" + field).html(transViewAdv(fieldVals[field]));
+            });
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, "#problem"]);
+            //q type samples..
+            var qtypeAns = {'sub': '', 'num': '42', 'mcq': '3'};
+            var qtypeOpts = {
+                'sub': '',
+                'num': '',
+                'mcq': '<ol>\n<li>First option</li>\n<li>Second option</li>\n<li>Third option</li>\n</ol>'
+            };
+            /* $("#qtypeButs").buttonset(); */
+            var qtypeAns = {'sub': '', 'num': '42', 'mcq': '3'};
+            var qtypeOpts = {
+                'sun_ans': '',
+                'num': '',
+                'mcq': '<ol>\n<li>First option</li>\n<li>Second option</li>\n<li>Third option</li>\n</ol>'
+            };
+
+            $("#qtypeButs :radio").on("click", function () {
+                var newType = $(this).val();
+                if ((['sub', 'num', 'mcq']).indexOf(newType) < 0) {
+                    return;
+                }
+                fieldVals["qtype"] = $(this).val();
+                //load sample opts, answer..
+                fieldVals["answer"] = qtypeAns[newType];
+                fieldVals["options"] = qtypeOpts[newType];
+                $("#answer").html(transViewAdv(fieldVals["answer"]));
+                $("#options").html(transViewAdv(fieldVals["options"]));
+                if (curField == "answer" || curField == "options") {
+                    loadField(curField);
+                }
+                //TODO: invalidate 'save' button on qtype change
+                //      and stream change too..
+            });
+            /* $("#editFieldButs").buttonset(); */
+            $("input:radio[name=editField]").on("click", function () {
+                switchField($(this).val());
+            });
+            curField = "label";
+            loadField(curField);
+            probId = {{ problem.id }};
+            wireSaveMachine(getTexField(),
+                    $("#save-draft"),
+                    'saveproblem', {pid: probId},
+                    function () {
+                        storeField(curField);
+                    },
+                    function () {
+                        return fieldVals;
+                    },
+                    function () {
+                    });
+        });
+    </script>
+    <style>
+        #toolbar {
+            padding: 4px;
+            display: inline-block;
+            font-size: 0.7em;
+        }
+
+        /* support: IE7 */
+        * + html #toolbar {
+            display: inline;
+        }
+    </style>
+    <script>
+        window.onbeforeunload = function (evt) {
+            var message = 'Did you remember to save your work?';
+            if (typeof evt == 'undefined') {
+                evt = window.event;
+
+            }
+            if (evt) {
+                evt.returnValue = message;
+            }
+
+            return message;
+
+        }
+    </script>
+{% endblock %}

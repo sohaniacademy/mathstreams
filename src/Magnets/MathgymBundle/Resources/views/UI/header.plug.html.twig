@@ -1,0 +1,269 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::plug.html.twig' %}
+
+{% block plug_body %}
+    {#{% set isGold = true %}#}
+    <span ngRoot="ngHeaderApp" ng-controller="ngCtrl" id="headerAppWrapper" ng-cloak>
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="glyphicon glyphicon-menu-hamburger" style="color:white"></span>
+            </button>
+            <a class="navbar-brand header-item" style="padding:0px" href="{{ path('index') }}">
+                <img id="brandImg" src="{{ asset('bundles/magnetsmathgym/images/logo-lq.png') }}"
+                     class="full-height text-center"
+                     ng-class="{'baseShadow':!isHome(),'dropShadow':isHome()}"/>
+            </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <span id="header-left">
+                <ul id="header-left" class="nav navbar-nav">
+                    {% if app.user %}
+                        <li>{# ng-if="isCurrent('{{ path('user_root') }}')"> #}
+                            <a class="header-item" href="{{ path('user') }}" data-toggle="tooltip"
+                               data-placement="bottom"
+                               title="Home"
+                               ng-class="{'header-current': isCurrent('{{ path('user') }}') || isCurrent('{{ path('admin') }}') || isCurrent('{{ path('su') }}')}">
+                                <span class="glyphicon"
+                                      ng-class="{'glyphicon-home':!isCurrent('{{ path('admin_root') }}') && !isCurrent('{{ path('su_root') }}'), 'glyphicon-tower':isCurrent('{{ path('admin_root') }}'),'glyphicon-queen':isCurrent('{{ path('su_root') }}'),}"></span></a>
+                            {#<span class="glyphicon glyphicon-tower"></span></a>#}
+                        </li>
+                    {% endif %}
+                    <li ng-if="!isIndex()">
+                        <a class="header-item" href="{{ path('lessons') }}" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Lessons"
+                           ng-class="{'header-current': isCurrent('{{ path('lessons') }}')}">
+                            <span class="glyphicon glyphicon-book"></span></a>
+                    </li>
+                    <li ng-if="!isIndex()">
+                        <a class="header-item" href="{{ path('problems') }}" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Problems"
+                           ng-class="{'header-current': isCurrent('{{ path('problems') }}')}">
+                            <span class="glyphicon glyphicon-question-sign"></span></a>
+                    </li>
+                    {#
+                    <li ng-if="isCurrent('{{ path('user_root') }}')">
+                        <a class="header-item" href="{{ path('reviews') }}" data-toggle="tooltip" data-placement="bottom"
+                           title="Reviews"
+                           ng-class="{'header-current': isCurrent('{{ path('reviews') }}')}">
+                            <span class="glyphicon glyphicon-search"></span>
+                            <sub><span class="label label-warning label-as-badge">117</span></sub></a>
+                    </li>
+                    <li ng-if="isCurrent('{{ path('user_root') }}')">
+                        <a class="header-item" href="{{ path('stats') }}" data-toggle="tooltip" data-placement="bottom"
+                           title="Stats"
+                           ng-class="{'header-current': isCurrent('{{ path('stats') }}')}">
+                            <span class="glyphicon glyphicon-stats"></span></a>
+                    </li>
+
+                    <li ng-if="isCurrent('{{ path('user_root') }}')">
+                        <a class="header-item" href="{{ path('chat') }}" data-toggle="tooltip" data-placement="bottom"
+                           title="Chatrooms"
+                           ng-class="{'header-current': isCurrent('{{ path('chat') }}')}">
+                            <span class="glyphicon glyphicon-comment"></span></a>
+                    </li>
+                    #}
+                    <li ng-if="isIndex()">
+                        <a class="header-item" href="{{ path('about') }}"
+                           ng-class="{'header-current': isCurrent('{{ path('about') }}')}">About</a>
+                    </li>
+                    <li ng-if="isIndex()">
+                        <a class="header-item" href="{{ path('contact') }}"
+                           ng-class="{'header-current': isCurrent('{{ path('contact') }}')}">Contact</a>
+                    </li>
+                    <li ng-if="isIndex()">
+                        <a class="header-item" href="{{ path('credits') }}"
+                           ng-class="{'header-current': isCurrent('{{ path('credits') }}')}">Credits</a>
+                    </li>
+                    {#<li ng-if="isErr()">#}
+                        {#<a class="header-item" style="color:red" href="#" ng-click="loadErr()">#}
+                            {#<span class="glyphicon glyphicon-exclamation-sign"></span> </a>#}
+                    {#</li>#}
+                </ul>
+            </span>
+            <span id="header-right">
+                <ul id="header-right" class="nav navbar-nav navbar-right">
+                    {% if app.user %}
+                        <li class="dropdown">
+                            <a href="#" id="uname" class="mono-font header-item dropdown-toggle" data-toggle="dropdown"
+                               role="button"
+                               aria-haspopup="true" aria-expanded="false"
+                               style="font-size:1.2em; font-weight: 600;">{{ app.user.username }}
+                                &nbsp;<span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="{{ path('user') }}">Main</a></li>
+                                <li><a href="{{ path('settings') }}">Settings</a></li>
+                                <li><a href="{{ path('logout') }}" data-xe-ignore>Sign out</a></li>
+                                {# <li role="separator" class="divider"></li>
+                                <li class="dropdown-header">Nav header</li>
+                                <li><a href="#">Separated link</a></li>
+                                <li><a href="#">One more separated link</a></li> #}
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li><a class="header-item" href="{{ path('register') }}">Register</a></li>
+                        <li><a class="header-item" href="{{ path('login') }}">Sign in</a></li>
+                    {% endif %}
+                </ul>
+            </span>
+        </div>
+    </span>
+    <style>
+        .baseShadow {
+            filter: brightness(80%) contrast(150%) sepia(0%);
+            -webkit-filter: brightness(80%) contrast(150%) sepia(0%);
+            transition: filter 1.0s;
+        }
+
+        .dropShadow {
+            filter: brightness(120%) contrast(120%) sepia(0%);
+            -webkit-filter: brightness(120%) contrast(120%) sepia(0%);
+            transition: filter 1.0s;
+        }
+
+        .baseShadow.sepia {
+            filter: brightness(80%) contrast(150%) sepia(100%);
+            -webkit-filter: brightness(80%) contrast(150%) sepia(100%);
+            transition: filter 1.0s;
+        }
+
+        .dropShadow.sepia {
+            filter: brightness(120%) contrast(120%) sepia(100%);
+            -webkit-filter: brightness(120%) contrast(120%) sepia(100%);
+            transition: filter 1.0s;
+        }
+
+        sub {
+            text-shadow: 0px 0px 5px black;
+        }
+
+        .header-item {
+            /*text-shadow: 0px 0px 10px black;*/
+            transition: background-color 0.3s ease-out, color 1.0s ease-out, filter 0.5s;
+            -webkit-transition: background-color 0.3s ease-out, color 1.0s ease-out, filter 0.5s;
+
+            font-size: 1.0em;
+        }
+
+        {%  if isGold is defined %}
+        .header-item:hover {
+            /*color: #white !important;*/
+            background-color: black !important;
+
+            filter: brightness(80%) contrast(120%) sepia(100%);
+            -webkit-filter: brightness(80%) contrast(120%) sepia(100%);
+            transition: filter 0.5s;
+            -webkit-transition: filter 0.5s;
+        }
+
+        {% else %}
+        .header-item:hover {
+            color: #6699ee !important;
+            background-color: black !important;
+            transition: none;
+        }
+
+        {%  endif %}
+        .header-item:focus {
+            color: #aaccff !important;
+        }
+
+        .header-current {
+            color: white !important;
+            text-shadow: 0px 0px 10px white;
+        }
+    </style>
+    <script>
+        (function () {
+            var ngApp = angular.module('ngHeaderApp', []);
+            ngApp.controller('ngCtrl', function ($scope) {
+                $scope.paths = ["{{ path('user_root') }}", "{{ path('admin_root') }}", "{{ path('su_root') }}"];
+                $scope.errStatus = false;
+
+                $scope.setErr = function () {
+                    {% if app.debug %}
+                        $scope.errStatus = true;
+                        $scope.$apply();
+                    {% endif %}
+                };
+                $scope.resetErr = function () {
+                    $scope.errStatus = false;
+                    //$scope.$apply();
+                };
+
+                $scope.isErr = function () {
+                    return $scope.errStatus;
+                };
+
+                $scope.loadErr = function () {
+                    //$("#myModal .modal-content").html("Loading..");
+                    //$("#myModal").modal(XE.errText);
+                    //setModal(XE.errText);
+                    XE.showErr();
+                    $scope.resetErr();
+//                    setInterval(function () {
+//                        $("#myModal .modal-content").html(XE.errText);
+//                    }, 500);
+//                    $('#myModal').on('hidden.bs.modal', function () {
+//                        $scope.resetErr();
+//                    });
+                };
+
+                $scope.isCurrent = function (lbl) {
+                    if (window.location.pathname.indexOf(lbl) >= 0) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                };
+                $scope.isIndex = function () {
+                    isIdx = true;
+                    $.each($scope.paths, function (key, val) {
+                        if (window.location.pathname.indexOf(val) === 0) {
+                            isIdx = false;
+                        }
+                    });
+                    return isIdx;
+                };
+                $scope.isHome = function () {
+                    return (window.location.pathname == "/");
+                };
+                $scope.toggleSepia = function () {
+                    $("#brandImg").toggleClass('sepia nosepia');
+                    setTimeout(function () {
+                        $("#brandImg").toggleClass('sepia nosepia')
+                    }, 2000);
+                };
+                $scope.createHandler = function () {
+                    $("#brandImg").toggleClass('nosepia');
+                    {#$scope.loopIntervalOb = setInterval($scope.toggleSepia, 7000);#}
+                };
+                $scope.destroyHandler = function () {
+                    clearInterval($scope.loopIntervalOb);
+                };
+                $scope.createHandler();
+            });
+        }());
+    </script>
+{% endblock %}

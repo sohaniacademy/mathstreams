@@ -1,0 +1,332 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::frag.html.twig' %}
+
+{% block frag_body %}
+    <table class="table">
+        <thead>
+        <tr class="row" style="position:relative">
+            <th class="text-center" style="width:49%; padding: 0px;">Source<a href="#" id='tex-help-lnk'
+                                                                         data-toggle="tooltip"
+                                                                         data-placement="right"
+                                                                         title="Get help on formatting using LaTeX and HTML"><sup
+                            id='tex-q'>?</sup></a>
+            </th>
+            <th class="text-center" style="width:49%; padding: 0px;">Preview</th>
+            <td class="btn btn-default glyphicon glyphicon-minus" id="toolbar-toggle"
+                style="position: absolute; left: 10px; width: 14px; padding: 0px; font-size: 10px; height: 14px;"></td>
+            <td class="btn glyphicon" id="render-status"
+                style="position: absolute; right: 10px; width: 14px; padding: 0px; font-size: 10px; height: 14px;"></td>
+            <script>
+                $("#toolbar-toggle,#render-status").click(function () {
+                    $("#texhelp-row,#texStatus").slideToggle();
+                    $("#toolbar-toggle").toggleClass('glyphicon-minus glyphicon-plus');
+                });
+            </script>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="row" id="texHelp-row-wrap">
+            {# <td>{{ injected|default("") }}</td> #}
+            <td style="margin:0px;padding:0px;">
+                <div id='texhelp-row' role='group'>
+                </div>
+            </td>
+            <td id="texStatus" class="mono-font"></td>
+        </tr>
+        <tr class="row">
+            <td style="padding: 0px; height:{{ tex_height|default('25vh') }}">
+                <textarea id="solutionSrc"
+                          style="width:100%; margin-top:5px; height:100%; overflow:auto; resize: none;"
+                          class="form-control mono-font" placeholder="Type here" aria-describedby="basic-addon1"></textarea>
+                {{ injected|default("")|raw }}
+            </td>
+            <td style="padding: 0px; height:{{ tex_height|default('25vh') }}">
+                <div id="solutionTex" class="col-md-6 tex-render"
+                     style="width: 100%; margin-top:5px; height:100%; overflow:auto;">
+                    <div id="frmBuf0"></div>
+                    <div id="frmBuf1"></div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div id="texLog" style="display:none">
+    </div>
+    <script>
+
+        $("#tex-help-lnk").css('cursor', 'help').on('click', function () {
+            window.open("{{ path('tex_help') }}", "LaTeX and HTML help", 'width=' + screen.availWidth / 2 + ', height=' + screen.availHeight + ', top=0, left=' + screen.availWidth + ', scrollbars=yes').focus(); // windowFeatures + ',left=' + centeredX + ',top=' + centeredY).focus();
+        });
+        {#
+        $.widget("ui.tooltip", $.ui.tooltip, {
+            options: {
+                content: function () {
+                    return $(this).prop('title');
+                },
+                position: {
+                    my: "left bottom",
+                    at: "right center"
+                }
+            }
+        });
+        $(function () {
+            $('#tex-q').attr('title', function () {
+                return $("#tex-formatting-help").remove().html()
+            })
+            $(document).tooltip();
+        });
+        #}
+    </script>
+
+
+    <script>
+
+        var curBufIdx;
+        var isCurrentlyRendering = false;
+        var isRenderPending = false;
+        var pendingErrorMsgs = false;
+        var lastRenderedSrc = "";
+        var isTexValid = true;
+
+        function loadBuf(newIdx) {
+            curBufIdx = newIdx;
+            if (curBufIdx == 0) {
+                $("#frmBuf1").hide();
+                $("#frmBuf0").show();
+            } else {
+                $("#frmBuf0").hide();
+                $("#frmBuf1").show();
+            }
+        }
+
+        function renderToBackBuf() {
+            if (curBufIdx == 0)
+                backBufIdx = "#frmBuf1";
+            else
+                backBufIdx = "#frmBuf0";
+            lastRenderedSrc = $("#solutionSrc").val();
+            $(backBufIdx).html(transViewAdv(lastRenderedSrc));
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, backBufIdx]);
+            MathJax.Hub.Queue(postRender);
+        }
+
+        function postRender() {
+
+            //swap buffers..
+            if (curBufIdx == 0) {
+                loadBuf(1);
+            } else {
+                loadBuf(0);
+            }
+            if (!pendingErrorMsgs) {
+                $("#texStatus").html("<span style='color:green; font-weight:bold;'>Rendering complete</span>");
+                $("#render-status").removeClass('glyphicon-remove glyphicon-refresh btn-danger btn-info').addClass('glyphicon-ok btn-success');
+                isTexValid = true;
+                //	MathJax.HTML.addText($("#texLog")[0],"RenderDone!");
+            } else {
+                pendingErrorMsgs = false;
+            }
+            //check queue status..
+            if (!isRenderPending) {
+                //no queue pending, so finish rendering..
+                isCurrentlyRendering = false;
+            } else {
+                isRenderPending = false;
+                renderToBackBuf();
+            }
+        }
+
+        function enqueueRender() {
+
+            if (!isCurrentlyRendering) {
+                //launch the loop..
+                isCurrentlyRendering = true;
+                renderToBackBuf();
+            } else {
+                //push to queue..
+                isRenderPending = true;
+            }
+        }
+
+        function insertAtCursor(myField, myValue) {
+            //IE support
+            if (document.selection) {
+                myField.focus();
+                sel = document.selection.createRange();
+                sel.text = myValue;
+            }
+            //MOZILLA and others
+            else if (myField.selectionStart || myField.selectionStart == '0') {
+                var startPos = myField.selectionStart;
+                var endPos = myField.selectionEnd;
+                myField.value = myField.value.substring(0, startPos)
+                        + myValue
+                        + myField.value.substring(endPos, myField.value.length);
+                myField.selectionStart = startPos + myValue.length;
+                myField.selectionEnd = startPos + myValue.length;
+            } else {
+                myField.value += myValue;
+            }
+        }
+
+        function createTexHelpGroup(name, arr) {
+            var tex2Append = '<span class="btn-group">';
+            tex2Append += '<button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">' + name + ' <span class="caret"></span></button>';
+            tex2Append += '<ul class="dropdown-menu" role="menu">';
+            arr.forEach(function (entry) {
+                //add button..
+                tex2Append += '<li><a class="btn-helper" hlptxt="' + entry + '" >$' + entry + '$</a></li>';
+            });
+            tex2Append += '</ul></span>';//</div>';
+            return tex2Append;
+        }
+
+        $(function () {
+            tex_helpTexts = [];
+
+            tex_helpTexts.push('{x}^{y}'); //
+            tex_helpTexts.push('{x}_{y}'); //
+            tex_helpTexts.push('\\frac{x}{y}'); //
+            tex_helpTexts.push('{x}\\times{y}'); //
+            tex_helpTexts.push('{x}\\div{y}'); //
+            tex_helpTexts.push('\\sqrt[n]{x}'); //
+            tex_helpTexts.push('\\rightarrow'); //
+            tex_helpTexts.push('\\pi'); //
+            tex_helpTexts.push('\\leq'); //
+            tex_helpTexts.push('\\geq'); //
+            tex_helpTexts.push('\\pm'); //
+            var txt2append = '';
+            txt2append += '<div class="button-group" role="group"><button class="btn btn-xs btn-default btn-helper" id="tex-symb-button" hlptxt="$ ... $" >$\\$ ... \\$$</button>';
+
+            tex_helpTexts.forEach(function (entry) {
+                //add button..
+                txt2append += '<button class="btn btn-xs btn-default btn-helper" hlptxt="' + entry + '" >$' + entry + '$</button>';
+            });
+
+            txt2append += createTexHelpGroup('Symbols', ['\\alpha', '\\beta', '\\theta']);
+            txt2append += createTexHelpGroup('Advanced', ['\\sum_{i=0}^{n}{i}', '\\frac{d}{dx}{y}', '\\int_{x=0}^{1}{x^n \\delta x}', '\\lim_{x\\rightarrow}{x}',
+                '\\begin{bmatrix}' +
+                '1 & 2 & 0\\\\[0.3em]' +
+                '-1.2 & 0& 3 \\\\[0.3em]' +
+                '0 & 0.5 & 1' +
+                '\\end{bmatrix}']);
+            txt2append += '&nbsp;&nbsp;';
+            htm_helpTexts = [];
+            htm_helpTexts.push('<b>B</b>');
+            htm_helpTexts.push('<i>I</i>');
+            htm_helpTexts.push('<u>U</u>');
+
+            htm_helpTexts.forEach(function (entry) {
+                //add button..
+                txt2append += '<button class="btn btn-xs btn-default btn-helper" hlptxt="' + entry + '" >' + entry + '</button>';
+            });
+            txt2append += '&nbsp;&nbsp;';
+            txt2append += '<button class="btn btn-xs btn-default btn-helper btn-img-gallery" data-toggle="modal" data-target="#gallery-popup">Images..</button>';
+            txt2append += '</div>';
+            $('#texhelp-row').append(txt2append);
+
+            $('.dropdown-toggle').dropdown();
+            $('.btn-helper').on('click', function () {
+                insertAtCursor($("#solutionSrc")[0], $(this).attr('hlptxt'));
+                enqueueRender();
+                enqueueHook();
+            });
+
+        });
+
+        var texSrcChangeHookFn = nulFn;
+
+        function texSetSrcHook(hook) {
+            texSrcChangeHookFn = hook;
+        }
+
+        function enqueueHook() {
+            if (texSetSrcHook != null)
+                MathJax.Hub.Queue(texSrcChangeHookFn);
+        }
+
+        $("#solutionSrc").keyup(function () {
+            if ($("#solutionSrc").val() != lastRenderedSrc) {
+                enqueueRender();
+                enqueueHook();
+            }
+        });
+        $(function () {
+            loadBuf(0);
+            enqueueRender();
+        });
+        var originalFilterText = MathJax.Message.filterText;
+        MathJax.Message.filterText = function (txt, n) {
+            txt = originalFilterText(txt, n);
+            if (!pendingErrorMsgs) {
+                $("#texStatus").html("<span style='color:blue;font-style:italic;'>" + txt + "</span>");
+                $("#render-status").removeClass('glyphicon-remove glyphicon-ok btn-danger btn-success').addClass('glyphicon-refresh btn-info');
+            }
+            return txt;
+        };
+        MathJax.Hub.signal.Interest(function (message) {
+            var msgStr = message + "";
+            if (msgStr.search("TeX Jax") >= 0) {
+                pendingErrorMsgs = true;
+                isTexValid = false;
+                $("#texStatus").html("<span style='color:red;'><span style='font-weight:bold'>Error: </span>" + msgStr + "</span>");
+                $("#render-status").removeClass('glyphicon-ok glyphicon-refresh btn-success btn-info').addClass('glyphicon-remove btn-danger');
+            }
+            MathJax.HTML.addText($("#texLog")[0], msgStr);
+            MathJax.HTML.addElement($("#texLog")[0], "br");
+        });
+        function getTexCode() {
+            return $("#solutionSrc").val(); //.replace(/(?:\r\n|\r|\n)/g, '<br />');
+        }
+
+        function setTexCode(code) {
+            $("#solutionSrc").val(code); //.replace('<br />', '\n'));
+            enqueueRender();
+        }
+
+        function getTexField() {
+            return $("#solutionSrc");
+        }
+
+        function getIsTexValid() {
+            return isTexValid;
+        }
+
+        $('#gallery-popup').on('show.bs.modal', function (event) {
+            //load gallery page..
+            $("#gallery-body").load(Routing.generate('gallery'));
+        });
+
+    </script>
+    <div id="gallery-popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modal area"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="panel panel-default">
+                    <div class="gallery-title panel-heading"><h4>Media gallery</h4></div>
+                    <div class="gallery-body">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

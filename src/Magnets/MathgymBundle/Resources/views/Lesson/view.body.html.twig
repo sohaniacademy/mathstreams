@@ -1,0 +1,54 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <a class="close-btn btn btn-warning pull-right" data-toggle="tooltip" title="Close"><span
+                        class="glyphicon glyphicon-remove"></span></a>
+            {% if canEdit %}
+                <a class="edit-btn btn btn-primary pull-right" data-toggle="tooltip" title="Edit"><span
+                            class="glyphicon glyphicon-pencil"></span></a>
+            {% endif %}
+            <h1>{{ lesson.name }}</h1>
+        </div>
+    </div>
+
+    {{ include('MagnetsMathgymBundle:UI:texInputAdvanced.frag.html.twig',{'editMode':false}) }}
+    <script>
+        $(function () {
+            loadAll(JSON.parse('{{ lesson.content|e('js') }}'));
+        });
+        var lessonId = {{ lesson.id  }};
+        {% if canEdit %}
+        $(".edit-btn").on('click', function () {
+            openPopup(Routing.generate('editlesson', {'lid': lessonId}), 'Edit Lesson', 'fullishMain');
+            window.close();
+        });
+        $(".close-btn").on('click', function () {
+            window.close();
+        });
+        {% endif %}
+
+    </script>
+
+{% endblock %}

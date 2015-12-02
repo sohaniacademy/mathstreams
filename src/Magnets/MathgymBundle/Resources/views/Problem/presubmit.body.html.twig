@@ -1,0 +1,55 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+    <br/><br/>
+    {{ include('MagnetsMathgymBundle:UI:questionView.frag.html.twig') }}
+
+    <div id="previewArea">
+        Submit your solution:
+        <button id="back-edit">Back to editing</button>
+        <button id="submit">Submit!</button>
+    </div>
+
+    <b>Note:</b> Please check your solution properly. You CANNOT edit your solution after submitting!<br/><br/>
+
+    <table class="full-width">
+        <tr>
+            <td class="full-width text-center">
+                <b>Preview</b>
+            </td>
+        </tr>
+        <tr>
+            <td id="previewBuf">{{ draft.response|raw|nl2br }}</td>
+        </tr>
+    </table>
+    <script>
+        $(function () {
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, "#previewBuf"]);
+            $("#back-edit").button().on("click", function () {
+                document.location.href = "{{ path('solveproblem',{ pid: problem.id }) }}";
+            });
+            $("#submit").button().on("click", function () {
+                document.location.href = "{{ path('submitdraft',{ pid: problem.id }) }}";
+            });
+        });
+    </script>
+{% endblock %}

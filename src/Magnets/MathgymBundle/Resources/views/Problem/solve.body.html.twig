@@ -1,0 +1,302 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-off set-2">
+            <a href="{{ path('user') }}">&laquo; Back to home</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            {{ include('MagnetsMathgymBundle:UI:questionView.frag.html.twig') }}
+        </div>
+    </div>
+    <div id="answerArea">
+        <div class="row">
+            <div class="col-md-4 col-md-offset-2">
+                <div class="well">
+                    {# contents may vary, based on type.. #}
+                    {% if problem.qtype == 'sub' %}
+                        Enter your solution below
+                        {% elseif problem.qtype == 'num' %}
+                        Enter your answer:<input type="text" id="answer-field"/>&nbsp;&nbsp;
+                        <button id="check-answer" class="btn min-padding btn-default">Check answer</button>
+                        {% elseif problem.qtype == 'mcq' %}
+                        <h4>Choose your option(s):</h4><span id=opts>{{ problem.options|raw|nl2br }}</span><span
+                            id='pre-sel-opt'></span><span id='sel-opt' style='font-weight: bold'></span>&nbsp;&nbsp;
+                        <button id="check-answer" class="btn min-padding btn-default" style="display:none;">Check answer
+                        </button>
+                        <script>
+                            var sel_opts = [];
+                            $("#opts li").css('cursor', 'pointer').hover(function () {
+                                $(this).css('background-color', '#888888');
+                            }, function () {
+                                $(this).css('background-color', 'inherit');
+                            }).on('click', function () {
+                                        // $(this).attr('class').search('opt') + 3;
+                                        //var optOffset = $(this).index()/2; alert(optOffset);
+                                        //var idx = $(this).attr('class').substring(optOffset, optOffset + 1);
+
+                                        //TODO: this is a temporary hack, since opts are given in the order li,br,li,br
+                                        var idx = 1 + $(this).index() / 2;
+                                        //add/remove idx from selected options..
+                                        index = sel_opts.indexOf(idx)
+                                        if (index >= 0) {
+                                            //remove
+                                            sel_opts.splice(index, 1);
+                                            $(this).css('color', 'inherit');
+                                        } else {
+                                            sel_opts.push(idx);
+                                            sel_opts = sel_opts.sort();
+                                            $(this).css('color', 'blue');
+                                        }
+                                        $('#pre-sel-opt').html("Your selection: <b>Option(s)</b> ");
+                                        $('#sel-opt').html(sel_opts.join());
+                                        $('#check-answer').css('display', 'inline-block');
+                                    }
+                            );</script>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><h4>Hints</h4></div>
+                    <ul class="list-group">
+                        <li class="list-group-item" id="hint1-status"><span class="glyphicon glyphicon-lock"></span>&nbsp;Hint
+                            1 locked
+                        </li>
+                        <li class="list-group-item" id="hint2-status"><span class="glyphicon glyphicon-lock"></span>&nbsp;Hint
+                            2 locked
+                        </li>
+                        <li class="list-group-item" id="sol-status"><span class="glyphicon glyphicon-lock"></span>&nbsp;Solution
+                            locked
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div id="score-panel" class="panel panel-default">
+                    <div class="panel-heading"><h4>Score</h4></div>
+                    <table class="table">
+                        <tbody>
+                        <tr>
+                            <td>Awarded</td>
+                            <td id="awarded-view"></td>
+                        </tr>
+                        <tr>
+                            <td>Penalty</td>
+                            <td id="penalty-view"></td>
+                        </tr>
+                        <tr>
+                            <td><h4>Total</h4></td>
+                            <td><h4 id="total-view"></h4></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modal area" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="panel panel-default">
+                    <div class="hint-title panel-heading"><h4>Hint</h4></div>
+                    <div id="hint-body">This is the hint: Hint hint!!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if problem.qtype == 'sub' %}
+        <div class="row">
+            <div id="submitArea" class="col-md-8 col-md-offset-2">
+                <div class="well">
+                    <a href="#" id="submitArea-toggle" style="text-decoration:none;"><span id="toggle-icon"></span>Enter
+                        your solution [Optional<sup id='sol-q'>?</sup>]</a>
+
+                    <div id="submitWidget">
+                        <button id="save-draft" class="btn-default">Save Draft</button>
+                        <button id="preview-draft" class="btn-default">Preview solution</button>
+                        {{ include('MagnetsMathgymBundle:UI:texInput.frag.html.twig') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="sol-help">
+            By submitting a solution, you can:
+            <ul>
+                <li>Maintain a virtual 'notebook' of all your submitted solutions
+                <li>Compare your solution to the official one side-by-side
+                <li>Get feedback if any other users review your solution, and leave helpful comments
+            </ul>
+        </div>
+        <script>
+            //wireHover('#sol-q', '#sol-help');
+            $(function () {
+                var curDraft = '{{ draft.response|default('This is a sample solution.')|e('js') }}';
+                setTexCode(decodeHTML(curDraft));
+                $("#preview-draft").on('click', function () {
+                    document.location.href = "{{ path('previewdraft',{ pid: problem.id }) }}";
+                });
+                wireSaveMachine(
+                        getTexField(),
+                        $("#save-draft"),
+                        'savedraft', {pid: {{ problem.id }}},
+                        nulFn,
+                        function () {
+                            return {response: getTexCode()};
+                        },
+                        nulFn
+                );
+                $('#submitWidget').hide();
+                $("#toggle-icon").html("&#9658;");
+                //alert("&#9658;");
+                // append click event to the a element
+                $('#submitArea-toggle').click(function (e) {
+                    // slide down the corresponding div if hidden, or slide up if shown
+                    var elToSlide = $('#submitWidget');
+                    var el2ToSlide = $('#answerArea');
+                    if (elToSlide.css('display') == 'none') {
+                        $("#toggle-icon").html("&#9660;");
+                    } else {
+                        $("#toggle-icon").html("&#9658;");
+                    }
+                    elToSlide.slideToggle();
+                    el2ToSlide.slideToggle();
+                    $('#submitArea').toggleClass("col-md-8 col-md-offset-2 col-md-12", 400);
+                    // set the current item as active
+                    //$(this).parent().toggleClass('active');
+                    e.preventDefault();
+                });
+            });</script>
+    {% endif %}
+    <script>
+        var curqtype = "{{ problem.qtype|e('js') }}";
+        $(function () {
+            //answer fetching method, for different q types..
+            $("#check-answer").on('click', function () {
+                setLabel($("#check-answer"), 'Checking..', 'info');
+                XE.postAjax('checkanswer', {
+                    routeParamsOb: {pid: {{ problem.id }}},
+                    postDataOb: {'response': getAns()},
+                    successFn: function (ob) {
+                        if (ob['result'] == 'Correct') {
+                            setLabel($("#check-answer"), 'Correct!', 'success');
+                        } else {
+                            setLabel($("#check-answer"), 'Wrong! Please try again..', 'warning');
+                            //maybe optionally suggest a hint?
+                        }
+                        superLog(ob);
+                        updateScore(ob['score'], ob['penalty']);
+                        updateHints(ob['score'], ob['penalty']);
+                    },
+                    errFn: function (ob) {
+                        setLabel($("#check-answer"), 'Error! Please try again..', 'danger');
+                    }
+                });
+            });
+            $('#popup').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var contentType = button.data('modaltype');
+                if (['hint1', 'hint2', 'sol'].indexOf(contentType) >= 0) {
+                    //Load data..
+                    $(this).find('#hint-body').html('Loading..');
+                    XE.postAjax('viewhint', {
+                        routeParamsOb: {
+                            pid:{{ problem.id }},
+                            hlevel: contentType,
+                        }
+                        ,
+                        successFn: function (resp) {
+                            $('#hint-body').html(resp[contentType]);
+                            MathJax.Hub.Queue(["Typeset", MathJax.Hub, "hint-body"]);
+                            updateScore(resp['score'], resp['penalty']);
+                        }
+                    });
+                }
+            })
+            ;
+        })
+        ;
+        function updateHints(score, penalty) {
+            //check if penalty limits have been exceeded..
+            //or q type is subjective..
+            var hintsPenaltyThres = [0, 2, 5, 8];
+            var scoreInt = (parseInt(score)).toString();
+            var penaltyInt = (parseInt(penalty)).toString();
+            if (penaltyInt >= hintsPenaltyThres[1] || curqtype == 'sub') {
+                $("#hint1-status").html("<a href='#' data-toggle='modal' data-target='#popup' data-modaltype='hint1' >Hint 1 available!</a>");
+                if (penaltyInt == hintsPenaltyThres[1]) {
+                    //make the thing's box blink..
+                    blinkN($("#hint1-status"), 3);
+                }
+            }
+            if (penaltyInt >= hintsPenaltyThres[2] || curqtype == 'sub') {
+                $("#hint2-status").html("<a href='#' data-toggle='modal' data-target='#popup' data-modaltype='hint2' >Hint 2 available!</a>");
+                if (penaltyInt == hintsPenaltyThres[2]) {
+                    //make the thing's box blink..
+                    blinkN($("#hint2-status"), 3);
+                }
+            }
+            if (penaltyInt >= hintsPenaltyThres[3] || curqtype == 'sub') {
+                $("#sol-status").html("<a href='#' data-toggle='modal' data-target='#popup' data-modaltype='sol' >Solution available!</a>");
+                if (penaltyInt == hintsPenaltyThres[3]) {
+                    //make the thing's box blink..
+                    blinkN($("#sol-status"), 3);
+                }
+            }
+        }
+
+        function updateScore(score, penalty) {
+            $('#awarded-view').html((parseInt(score)).toString());
+            $('#penalty-view').html(( -parseInt(penalty)).toString());
+            $('#total-view').html((parseInt(score)).toString() + " / " + ((10 - parseInt(penalty))).toString());
+            blinkN($("#score-panel"), 1);
+        }
+        $(function () {
+            updateScore({{ draft.score|default('0') }}, {{ draft.penalty|default('0') }});
+            updateHints({{ draft.score|default('0') }}, {{ draft.penalty|default('0') }});
+        })
+
+        function getAns() {
+            if (curqtype == 'sub') {
+                return "";
+            } else if (curqtype == 'num') {
+                return $("#answer-field").val();
+            } else if (curqtype == 'mcq') {
+                return $("#sel-opt").html();
+            }
+        }
+    </script>
+    <script>
+        window.onbeforeunload = function (evt) {
+            var message = 'Did you remember to save your work?';
+            if (typeof evt == 'undefined') {
+                evt = window.event;
+            }
+            if (evt) {
+                evt.returnValue = message;
+            }
+
+            return message;
+        }
+    </script>
+{% endblock %}

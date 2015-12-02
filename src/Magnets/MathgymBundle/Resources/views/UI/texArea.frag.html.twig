@@ -1,0 +1,69 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::frag.html.twig' %}
+
+{% block frag_body %}
+    <div style="position:relative;">
+        <span id="texSrc-{{ tex_id|default('a0') }}" class="tex-source" style="display:none">
+            {{ tex_src|default('') }}
+        </span>
+        <span id="texView-{{ tex_id|default('a0') }}" class="tex-render" style="display:block;">
+            {{ tex_src|default('') }}
+        </span>
+        <button class="btn btn-xs btn-default glyphicon glyphicon-search" data-toggle="tooltip" title='View source'
+                id="texToggle-{{ tex_id|default('a0') }}" style="position:absolute; top:-15px; right:-15px;"></button>
+    </div>
+    <script>
+        function getTexCode() {
+            return $("#texSrc-{{ tex_id|default('a0') }}").val();
+        }
+
+        function setTexCode(code) {
+            $("#texSrc-{{ tex_id|default('a0') }}").val(code);
+            $("#texView-{{ tex_id|default('a0') }}").val(code);
+            //enqueue render..
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, "#texView-{{ tex_id|default('a0') }}"]);
+        }
+
+        function getTexField() {
+            return $("#texSrc-{{ tex_id|default('a0') }}");
+        }
+        $(function () {
+            $("#texToggle-{{ tex_id|default('a0') }}").on('click', function () {
+                //check current status..
+                if ($("#texSrc-{{ tex_id|default('a0') }}").css('display') == 'none') {
+                    //show src..
+                    $("#texSrc-{{ tex_id|default('a0') }}").css('display', 'block');
+                    $("#texView-{{ tex_id|default('a0') }}").css('display', 'none');
+                    //switch icons..
+                    $("#texToggle-{{ tex_id|default('a0') }}").toggleClass('glyphicon-search glyphicon-blackboard');
+                    $("#texToggle-{{ tex_id|default('a0') }}").attr('title', 'Back to presentation');//.tooltip('disable').tooltip();
+                } else {
+                    $("#texSrc-{{ tex_id|default('a0') }}").css('display', 'none');
+                    $("#texView-{{ tex_id|default('a0') }}").css('display', 'block');
+
+                    $("#texToggle-{{ tex_id|default('a0') }}").toggleClass('glyphicon-search glyphicon-blackboard');
+                    $("#texToggle-{{ tex_id|default('a0') }}").attr('title', 'View source');//.tooltip('disable').tooltip();
+                }
+            });
+        });
+
+    </script>
+{% endblock %}

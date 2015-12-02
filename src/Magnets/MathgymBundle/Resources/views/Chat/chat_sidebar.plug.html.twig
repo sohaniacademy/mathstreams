@@ -1,0 +1,213 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::plug.html.twig' %}
+
+{% block plug_body %}
+    <div id='chat-wrap' class="panel panel-default hidden-xs hidden-sm"
+         style="position:fixed;right:25px;top:60px;bottom:40px;width: 32%;margin-bottom: 0px;"
+         ngRoot="ngChatSidebarApp_{{ seed[0] }}" ng-controller="ngCtrl" ng-cloak>
+        <div class="panel-heading"><h4>Chat
+                <span class="pull-right">
+                    <span class="small mono-font pull-right">{{ MX.ng('connStatus') }}
+                        <span ng-if="curRoom!=null">{{ MX.ng('roomUserList.length') }} users online</span>
+                    </span>
+                </span>
+            </h4></div>
+
+        {#<div style="padding-left: 10px; padding-right: 10px;"><span>General chatroom</span>#}
+        {#<span class="small mono-font pull-right">{{ MX.ng('connStatus') }}</span>#}
+        {#</div>#}
+        {#<div class="small" style="padding-left: 10px; padding-right: 10px;" id='chat-users'#}
+        {#ng-if="curRoom!=null">{{ MX.ng('roomUserList.length') }} users online#}
+        {#</div>#}
+        {#<hr style="margin:0px"/>#}
+        <div id='chat-area' class='tex-render'
+             style='word-wrap: break-word; overflow-y:scroll;position: absolute;top: 60px;bottom: 60px;left: 3px;right: 0px;'
+             ng-bind-html="roomView">Loading..
+        </div>
+        <div style="position:absolute;left:3px;right:55px;height:50px;bottom:5px">
+            <textarea id="chat_input" class="form-control mono-font full-width full-height"
+                      placeholder="Type here"></textarea>
+        </div>
+        <button id="send-btn" type="button" class="btn btn-xs btn-warning"
+                style="position: absolute;right:3px;bottom:5px;height:50px;width:50px;">
+            Send
+        </button>
+    </div>
+    <script>
+        (function () {
+                    var ngApp = angular.module('ngChatSidebarApp_{{ seed[0] }}', []);
+                    ngApp.controller('ngCtrl', ['$scope', '$sce', function ($scope, $sce) {
+                        $scope.primaryRoom = '{{ gen_rid|default('1') }}'; {# todo: is a hack #}
+                        $scope.curRoom = null;
+                        $scope.connStatus = 'Offline';
+                        $scope.roomView = "";
+                        $scope.roomUserList = [];
+
+                        $scope.pingLoopIntervalOb = null;
+                        $scope.lastUserlistUpCount = 6;
+
+                        $scope.updateChatView = function (msglist) {
+                            var newView = "";
+                            if ($scope.roomView !== "") {
+                                newView = $scope.roomView.$$unwrapTrustedValue();
+                            }
+                            $.each(msglist, function (key, value) {
+                                newView += '<span class="msg"><span class="usr-name mono-font">' + value['usr-name'] + ':</span><span class="usr-time mono-font">' + value['usr-time'] + '</span><br /><span class="usr-msg">' + transViewAdv(value['usr-msg']) + '</span></span><br />';
+                            });
+                            $scope.roomView = $sce.trustAsHtml(newView);
+                            $scope.$apply();
+                            //$('#chat-area').html($scope.roomView);
+                            //TODO: this seems out-of-place w.r.t. Angular design..
+                            $('#chat-area').scrollTop($("#chat-area").prop("scrollHeight"));
+                            MathJax.Hub.Queue(["Typeset", MathJax.Hub, 'chat-area']);
+                        };
+
+                        $scope.sendMsg = function (msg) {
+                            if ($scope.curRoom == null) {
+                                return;
+                            }
+                            //to current active chatroom..
+                            //show..
+                            setLabel($("#send-btn"), "<span class='glyphicon glyphicon-refresh'></span>", "info");
+                            $("#chat_input").attr('readonly', 'readonly');
+                            //TODO: use XE.. somehow ?
+                            XE.postAjax('chat_sendmsg', {
+                                routeParamsOb: {rid: $scope.curRoom},
+                                postDataOb: {msg: msg},
+                                successFn: function (data) {
+                                    $scope.updateChatView(data['msgList']);
+                                    setLabel($("#send-btn"), "Sent", "success");
+                                    setTimeout(function () {
+                                        setLabel($("#send-btn"), "Send", "warning");
+                                    }, 2000);
+                                    $("#chat_input").removeAttr('readonly');
+                                    $("#chat_input").val("");
+                                },
+                            });
+                        };
+                        $scope.updateUserListView = function (ulist) {
+                            //rid = $(ulist.find(".rid")[0]).html();
+                            rid = ulist['rid'];
+                            $scope.roomUserList = [];
+                            $.each(ulist['users'], function (key, value) {
+                                $scope.roomUserList.push(value);
+                            });
+                            //update view..
+                        };
+
+                        $scope.getUserList = function () {
+                            if ($scope.curRoom == null) {
+                                return;
+                            }
+                            XE.postAjax('chatroom_users', {
+                                routeParamsOb: {rid: $scope.curRoom},
+                                successFn: function (data) {
+                                    $scope.updateUserListView(data['ulist']);
+                                }
+                            });
+                        };
+
+                        $scope.pingLoop = function () {
+                            if ($scope.curRoom == null) {
+                                return;
+                            }
+                            XE.postAjax('chat_ping', {
+                                successFn: function (data) {
+                                    $scope.updateChatView(data['msgList']);
+                                }
+                            });
+
+                            $scope.lastUserlistUpCount++;
+                            if ($scope.lastUserlistUpCount > 8) {
+                                $scope.getUserList();
+                                $scope.lastUserlistUpCount = 0;
+                            }
+                        };
+
+                        $scope.createHandler = function () {
+                            $("#chat_input").keydown(function (e) {
+                                // Enter was pressed without shift key
+                                if (e.keyCode == 13 && !e.shiftKey) {
+                                    // prevent default behavior
+                                    e.preventDefault();
+                                    //instead, transmit the message..
+                                    $scope.sendMsg($("#chat_input").val());
+                                }
+                            });
+
+                            $('#send-btn').on('click', function () {
+                                $scope.sendMsg($("#chat_input").val());
+                            });
+                            $scope.connStatus = 'Connecting..';
+                            XE.postAjax('chatroom_enter', {
+                                        routeParamsOb: {rid: $scope.primaryRoom},
+                                        successFn: function (data) {
+                                            $scope.connStatus = 'Connected!';
+                                            $scope.curRoom = $scope.primaryRoom;
+                                            $scope.updateUserListView(data['ulist']);
+                                            $scope.$apply();
+                                        }
+                                    }
+                            );
+                            $scope.pingLoop();
+                            $scope.pingLoopIntervalOb = setInterval($scope.pingLoop, 10000);
+                            //join general room..
+//                    $("#chat-wrap").resizable({
+//                        //grid:[10000,1];
+//                        minHeight: 250,
+//                        handles: 's',
+//                    });
+                        };
+                        $scope.createHandler();
+                        $scope.destroyHandler = function () {
+                            //
+                            clearInterval($scope.pingLoopIntervalOb);
+                            //anything else to clear ?
+                            //TODO: for future, frameworkify this interval business..
+                        };
+                    }
+                    ])
+                    ;
+                }
+                ()
+        )
+        ;
+    </script>
+    <style>
+        .chat-sep {
+            font-style: italic;
+            color: gray;
+        }
+
+        .usr-time {
+            color: #999999;
+            /*font-family: monospace;*/
+            font-size: 0.6em;
+            float: right;
+        }
+
+        .usr-name {
+            color: #666666;
+            /*font-family: monospace;*/
+            font-size: 0.9em;
+        }
+    </style>
+{% endblock %}

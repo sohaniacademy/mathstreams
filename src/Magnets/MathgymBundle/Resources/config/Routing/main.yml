@@ -1,0 +1,48 @@
+#  This file is part of Mathstreams.
+#
+#  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+#
+#  Mathstreams is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+index_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/index.yml"
+
+security_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/access.yml"
+
+
+user_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/user.yml"
+    prefix: /user
+
+
+admin_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/admin.yml"
+    prefix: /admin
+
+superuser_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/superuser.yml"
+    prefix: /su
+
+remove_trailing_slash:
+    path: /{url}
+    defaults: { _controller: MagnetsMathgymBundle:Index:removeTrailingSlash }
+    requirements:
+        url: .*/$
+    methods: [GET]
+
+
+gold_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/Gold/main.yml"
+    prefix: /gold

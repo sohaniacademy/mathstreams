@@ -1,0 +1,166 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::plug.html.twig' %}
+
+{% block plug_body %}
+
+    <div id='main-wrap' ngRoot="ngHomeApp_{{ seed[0] }}" ng-controller="ngCtrl"
+         ng-cloak>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h4><a href="{{ path('lessons') }}">Lessons</a>
+                                <a href="{{ path('lessons') }}" class="btn btn-xs btn-success pull-right">Browse
+                                    all..</a>
+                            </h4></div>
+                        <table class="table table-hover">
+                            <thead>
+                            <tr class="th-row">
+                                <th colspan="3">Currently Reading</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Lesson 1</td>
+                                <td>70% complete</td>
+                                <td><span class="btn btn-warning btn-xs pull-right">Continue reading..</span></td>
+                            </tr>
+                            <tr>
+                                <td>Lesson 2</td>
+                                <td>89% complete</td>
+                                <td><span class="btn btn-warning btn-xs pull-right">Continue reading..</span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <table class="table table-hover">
+                            <thead>
+                            <tr class="th-row">
+                                <th colspan="3">Newly added</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Lesson 1</td>
+                                <td>70%</td>
+                                <td><span class="btn btn-primary btn-xs pull-right">Start reading..</span></td>
+                            </tr>
+                            <tr>
+                                <td>Lesson 2</td>
+                                <td>89%</td>
+                                <td><span class="btn btn-primary btn-xs pull-right">Start reading..</span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h4><a href="{{ path('problems') }}">Problems</a>
+                                <a href="{{ path('problems') }}" class="btn btn-xs btn-success pull-right">Browse
+                                    all..</a>
+                            </h4></div>
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th colspan="3">Saved filters<a class="non-th pull-right"></a></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="x in savedFilters['p']">
+                                <td>{{ MX.ng('x.name') }}</td>
+                                <td>8 new</td>
+                                <td><span class="btn btn-primary btn-xs pull-right">Start solving..</span></td>
+                            </tr>
+                            <tr ng-show="savedFilters['p'] == null">
+                                <td colspan="3" class="center">Loading..</td>
+                            </tr>
+                            {#<tr>#}
+                            {#<td>Stream 1</td>#}
+                            {#<td>8 new</td>#}
+                            {#<td><span class="btn btn-primary btn-xs pull-right">Start solving..</span></td>#}
+                            {#</tr>#}
+                            {#<tr>#}
+                            {#<td>Lesson 2</td>#}
+                            {#<td>21 new</td>#}
+                            {#<td><span class="btn btn-primary btn-xs pull-right">Start solving..</span></td>#}
+                            {#</tr>#}
+                            </tbody>
+                        </table>
+                        {#{{ render(controller('MagnetsMathgymBundle:Problem:getFiltered', { 'fid': 'inprogress', 'short': true })) }}#}
+                        {#
+                        <table class="table table-hover">
+                            <thead>
+                                <tr><th>#</th><th>Problem name</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>123</td><td>Probability</td></tr>
+                                <tr><td>123</td><td>Probability</td></tr>
+                            </tbody>
+                        </table>
+                        #}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var ngApp = angular.module('ngHomeApp_{{ seed[0] }}', []);
+            ngApp.controller('ngCtrl', ['$scope', '$sce', function ($scope, $sce) {
+
+                $scope.allStreams = SC.allStreams;
+                $scope.savedFilters = null;
+
+                $scope.safeApply = function (fn) {
+                    var phase = this.$root.$$phase;
+                    if (phase == '$apply' || phase == '$digest') {
+                        if (fn && (typeof(fn) === 'function')) {
+                            fn();
+                        }
+                    } else {
+                        this.$apply(fn);
+                    }
+                };
+
+                $scope.createHandler = function () {
+                    SC.safeFun(function () {
+                        $scope.allStreams = SC.allStreams;
+                        $scope.savedFilters = SC.savedFilters;
+                        $scope.safeApply();
+                    });
+                };
+
+                $scope.destroyHandler = function () {
+                };
+                $scope.createHandler();
+
+                $scope.startSolving = function () {
+
+                }
+            }]);
+        }());
+    </script>
+    <style>
+        .non-th {
+            font-weight: normal !important;
+        }
+    </style>
+{% endblock %}

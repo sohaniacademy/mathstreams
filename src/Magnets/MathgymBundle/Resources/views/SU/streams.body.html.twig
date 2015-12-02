@@ -1,0 +1,105 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+    <h2>Streams</h2>
+    <table class="table table-hover">
+        <tr class="th-row">
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th>Actions</th>
+        </tr>
+        {% for stream in streams %}
+            <tr>
+                <td>{{ stream.id }}</td>
+                <td>{{ stream.name }}</td>
+                <td>{{ stream.description }}</td>
+                <td>{{ stream.stype }}</td>
+                <td>
+                    <button class="btn btn-xs btn-info edit-stream-btn" data-target-idx='{{ stream.id }}' >Edit</button>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+    <template class="new-stream">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Create/update stream..</h4>
+        </div>
+        <div class="modal-body">
+            <label>Stream Name</label><input type="text" value=""
+                                             class="form-control input-sm mono-font edited-stream-name"
+                                             placeholder="Name"> <br/>
+            <label>Stream Description</label><input type="text" value=""
+                                                    class="form-control input-sm mono-font edited-stream-descr"
+                                                    placeholder="Description"> <br/>
+            <label>Stream Type</label><input type="text" value=""
+                                             class="form-control input-sm mono-font edited-stream-type"
+                                             placeholder="Type"> <br/>
+            <button class="btn btn-primary edited-stream-save">Save</button>
+        </div>
+    </template>
+    <button class="btn btn-success new-stream-btn">New stream..</button>
+    <script>
+        function initDialog(idx) {
+            args = {
+//                'id': -1,
+                'name': 'New stream',
+                'descr': 'This is a new stream',
+                'type': 'other'
+            };
+//            _.defaults(args, data);
+            if (typeof  idx === "undefined") idx = -1;
+            setModal($("template.new-stream").html());
+            //initialize fields
+            $(".edited-stream-name").val(args['name']);
+            $(".edited-stream-descr").val(args['descr']);
+            $(".edited-stream-type").val(args['type']);
+            $(".edited-stream-save").on('click', function () {
+                //send new stream request to server..
+                XE.postAjax('updatestream', {
+                    postDataOb: {
+                        'sid': idx,
+                        'name': $(".edited-stream-name").val(),
+                        'descr': $(".edited-stream-descr").val(),
+                        'type': $(".edited-stream-type").val()
+                    },
+                    successFn(data){
+                        location.reload();
+                    }
+                });
+                //setModal($("template.new-stream").html());
+            });
+        }
+        $(function () {
+            $(".new-stream-btn").on('click', function () {
+                initDialog();
+            });
+            $(".edit-stream-btn").on('click', function () {
+                initDialog($(this).attr('data-target-idx'));
+
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,77 @@
+#  This file is part of Mathstreams.
+#
+#  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+#
+#  Mathstreams is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU Affero General Public License as
+#  published by the Free Software Foundation, either version 3 of the
+#  License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU Affero General Public License for more details.
+#
+#  You should have received a copy of the GNU Affero General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+user:
+    path:     /home
+    defaults: { _controller: MagnetsMathgymBundle:User:index } 
+
+user_root:
+    path:     /
+    defaults: { _controller: FrameworkBundle:Redirect:redirect, route: user, permanent: true } 
+
+settings:
+    path:     /settings
+    defaults: { _controller: MagnetsMathgymBundle:User:settings }
+
+user_problem_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/Problem/user.yml"
+    prefix: /problem
+
+user_solution_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/Solution/user.yml"
+    prefix: /solution
+
+user_comment_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/Comment/user.yml"
+    prefix: /comment
+
+user_lesson_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/Lesson/user.yml"
+    prefix: /lesson
+
+user_chat_routes:
+    resource: "@MagnetsMathgymBundle/Resources/config/Routing/Chat/user.yml"
+    prefix: /chat
+
+getmaps:
+    path:     /maps
+    defaults: { _controller: MagnetsMathgymBundle:User:maps }
+    options:
+        expose: true
+
+
+gallery:
+    path:     /gallery
+    defaults: { _controller: MagnetsMathgymBundle:Gallery:view }
+    options:
+        expose: true
+
+reviews:
+    path:     /reviews
+    defaults: { _controller: MagnetsMathgymBundle:Problem:index } 
+
+
+stats:
+    path:     /stats
+    defaults: { _controller: MagnetsMathgymBundle:Problem:index } 
+
+
+notebook:
+    path:     /notebook
+    defaults: { _controller: MagnetsMathgymBundle:Solution:notebook }
+    options:
+        expose: true

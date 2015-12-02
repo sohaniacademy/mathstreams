@@ -1,0 +1,39 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::frag.html.twig' %}
+
+{% block frag_body %}
+    {% if is_granted('ROLE_ADMIN') %}
+        <b>Admin tools:</b>
+        <a id="new-problem-button" class="btn btn-xs btn-success" href="{{ path('newproblem') }}"><span
+                    class="glyphicon glyphicon-plus"></span> New problem..</a>
+        {% if is_granted('ROLE_SU') %}
+            <a id="edit-stream-button" class="btn btn-xs btn-primary" href="{{ path('managestream') }}"><span
+                        class="glyphicon glyphicon-pencil"></span> Manage streams..</a>
+        {% endif %}
+        <hr/>
+    {% endif %}
+
+    <h4>In progress</h4>
+    {{ render(controller('MagnetsMathgymBundle:Problem:getFiltered', { 'fid': 'inprogress' })) }}
+
+    <h4>Already solved</h4>
+    {{ render(controller('MagnetsMathgymBundle:Problem:getFiltered', { 'fid': 'solved' })) }}
+{% endblock %}

@@ -1,0 +1,215 @@
+{#
+ #  This file is part of Mathstreams.
+ #
+ #  Copyright (c) 2015  Sohani Academy <developer@sohaniacademy.com>
+ #
+ #  Mathstreams is free software: you can redistribute it and/or modify
+ #  it under the terms of the GNU Affero General Public License as
+ #  published by the Free Software Foundation, either version 3 of the
+ #  License, or (at your option) any later version.
+ #
+ #  This program is distributed in the hope that it will be useful,
+ #  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ #  GNU Affero General Public License for more details.
+ #
+ #  You should have received a copy of the GNU Affero General Public License
+ #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ #}
+
+{% extends 'MagnetsMathgymBundle::base.html.twig' %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <a href="{{ path('user') }}">&laquo; Back to all streams</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            {% set stats = [ "<span class='not-started'>Not started</span>","<span class='in-progress'>In progress</span>","<span class='submitted'>Submitted</span>"] %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h2>
+                        <small>Stream:</small> {{ stream.name }}</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr class="row">
+                            <th class="text-center">Problem no.</th>
+                            <th>Label</th>
+                            <th class="text-center">Type</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Score</th>
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <th class="text-center">Actions</th>
+                            {% endif %}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% set qtypes = { 'sub':'Subjective', 'num':'Numerical', 'mcq':'Multiple-choice', '':'' } %}
+                        {% for problem in problems %}
+                            <tr class="row prob-row" probId="{{ problem.id }}">
+                                <td class="text-center">{{ loop.index }}</td>
+                                <td>
+                                    <a href="{{ path('viewproblem', {pid: problem.id, sid: stream.id} ) }}">{{ problem.label }}</a>
+                                </td>
+                                <td class="text-center">{{ qtypes[problem.qtype] }}</td>
+                                <td class="text-center">{{ stats[status[problem.id]]|raw }}</td>
+                                <td class="text-center">{{ scores[problem.id]|default('N/A') }}</td>
+                                {% if is_granted('ROLE_ADMIN') %}
+                                    <td class="text-center actions-row">
+                                        <button class="edit-button btn btn-xs btn-info" probId="{{ problem.id }}">Edit
+                                        </button>
+                                        <button class="del-button btn btn-xs btn-danger" probId="{{ problem.id }}">
+                                            Delete
+                                        </button>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if is_granted('ROLE_ADMIN') %}
+                <button id="new-problem-button" class="btn btn-success">New problem</button>
+
+                <div id="del-problem-confirm" title="Delete problem?">
+                    <p><span class="ui-icon ui-icon-alert pull-left" style="margin:0 7px 20px 0;"></span>Are you sure?
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {#
+    <hr />
+    <div class="row" style="height: 400px">
+        <div class="col-md-9">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h2>Stats I</h2></div>
+                <div class="panel-body">
+                    <canvas id="myChart" style="padding-right: 40px;"></canvas>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h2>Stats II</h2></div>
+                <div class="panel-body">
+                    <canvas id="myChart2" style="padding-right: 40px;"></canvas>
+                </div>
+
+            </div>
+        </div>
+        <script>
+            var lineChartData = {
+            labels : ["January", "February", "March", "April", "May", "June", "July"],
+                    datasets : [
+                    {
+                    label: "My First dataset",
+                            fillColor : "rgba(220,220,220,0.2)",
+                            strokeColor : "rgba(220,220,220,1)",
+                            pointColor : "rgba(220,220,220,1)",
+                            pointStrokeColor : "#fff",
+                            pointHighlightFill : "#fff",
+                            pointHighlightStroke : "rgba(220,220,220,1)",
+                            data : [1.0, 1.4, 2, 4, 0.2, 2, 2]
+                    },
+                    {
+                    label: "My Second dataset",
+                            fillColor : "rgba(151,187,205,0.2)",
+                            strokeColor : "rgba(151,187,205,1)",
+                            pointColor : "rgba(151,187,205,1)",
+                            pointStrokeColor : "#fff",
+                            pointHighlightFill : "#fff",
+                            pointHighlightStroke : "rgba(151,187,205,1)",
+                            data : [2, 2, 1.0, 1.4, 2, 4, 0.2]
+                    }
+                    ]
+            };
+                    var radarChartData = {
+                    labels: ["Eating", "Drinking", "Sleeping", "Designing", "Coding", "Cycling", "Running"],
+                            datasets: [
+                            {
+                            label: "My First dataset",
+                                    fillColor: "rgba(220,220,220,0.2)",
+                                    strokeColor: "rgba(220,220,220,1)",
+                                    pointColor: "rgba(220,220,220,1)",
+                                    pointStrokeColor: "#fff",
+                                    pointHighlightFill: "#fff",
+                                    pointHighlightStroke: "rgba(220,220,220,1)",
+                                    data : [2, 2, 1.0, 1.4, 2, 4, 0.2]
+                            },
+                            {
+                            label: "My Second dataset",
+                                    fillColor: "rgba(151,187,205,0.2)",
+                                    strokeColor: "rgba(151,187,205,1)",
+                                    pointColor: "rgba(151,187,205,1)",
+                                    pointStrokeColor: "#fff",
+                                    pointHighlightFill: "#fff",
+                                    pointHighlightStroke: "rgba(151,187,205,1)",
+                                    data : [1.0, 1.4, 2, 4, 0.2, 2, 2]
+
+                            }
+                            ]
+                    };
+                    var ctx = $("#myChart").get(0).getContext("2d");
+                    var myNewChart = new Chart(ctx).Line(lineChartData, {
+            responsive: true, maintainAspectRatio: false,
+            });
+                    var ctx2 = $("#myChart2").get(0).getContext("2d");
+                    var myNewChart2 = new Chart(ctx2).Radar(radarChartData, {
+            responsive: true, maintainAspectRatio: false,
+            });</script>
+        #}
+    <style>
+        .prob-row {
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        $(function () {
+            $(".prob-row").on("click", function () {
+                document.location.href = Routing.generate('viewproblem', {
+                    pid: $(this).attr('probId'),
+                    sid: {{ stream.id }}
+                });
+            });
+            {% if is_granted('ROLE_ADMIN') %}
+            var delProblemDialog = $("#del-problem-confirm").dialog({
+                autoOpen: false,
+                modal: true,
+                buttons: {
+                    "Delete problem": function () {
+                        document.location.href = Routing.generate('delproblem', {pid: $(this).data('targetIdx')});
+                        $(this).dialog("close");
+                    },
+                    Cancel: function () {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+            $(".edit-button").on("click", function (e) {
+                e.stopPropagation();
+                document.location.href = Routing.generate('editproblem', {
+                    pid: $(this).attr('probId'),
+                    sid: {{ stream.id }}
+                });
+            });
+            $(".del-button").on("click", function (e) {
+                e.stopPropagation();
+                delProblemDialog.data('targetIdx', $(this).attr('probId'))
+                        .dialog("open");
+            });
+            $("#new-problem-button").on("click", function () {
+                document.location.href = Routing.generate('newproblem', {sid: {{ stream.id }}});
+            });
+            {% endif %}
+        });
+    </script>
+
+{% endblock %}
